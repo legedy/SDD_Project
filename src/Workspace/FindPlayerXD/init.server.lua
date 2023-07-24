@@ -37,7 +37,7 @@ for i = 1, math.ceil(#ZombiesFolderArray/ZombieChunkSize) do
 		DeepCopyTable(AllNodes),
 		BakedPaths
 	);
-	ActorTemplate:SendMessage('InitializeLoop');
+	ActorTemplate:SendMessage('InitializeLoop', 0.5);
 
 	ZombieChunks[i] = {
 		Actor = ActorTemplate;

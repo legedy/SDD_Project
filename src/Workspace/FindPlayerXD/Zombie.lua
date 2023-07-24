@@ -47,7 +47,7 @@ function Zombie:Step()
 		GoalPos = CurrentPlayerPos;
 		self.InView = true;
 	else
-		if (not self.InView) then
+		if (self.InView) then
 			self:UpdatePath();
 		end
 
@@ -58,10 +58,8 @@ function Zombie:Step()
 		else
 			if (self.PathIter >= #self.Path and #self.Path > 0) then
 				self.PathIter, self.Path = 1, {};
-				warn('reset')
 			end
 
-			print(self.PathIter)
 			self.PathIter += 1;
 		end
 

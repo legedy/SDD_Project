@@ -29,13 +29,16 @@ Actor:BindToMessage('Initialize', function(TargetBasePartParam, AllNodesParam, B
 	AllNodes, BakedPaths = AllNodesParam, BakedPathsParam;
 end)
 
-Actor:BindToMessage('InitializeLoop', function()
-	RunService.RenderStepped:ConnectParallel(function()
+Actor:BindToMessage('InitializeLoop', function(IterationDelay)
+	local t = 0;
+
+	RunService.RenderStepped:ConnectParallel(function(deltaTime)
+		if (t < IterationDelay) then t = 0 else return end
+
 		local ComputedGoalPos = {};
 
 		for i, Zombie in ActorZombies do
 			ComputedGoalPos[i] = Zombie:Step();
-			print(ComputedGoalPos[i])
 		end
 
 		task.synchronize();
@@ -44,6 +47,8 @@ Actor:BindToMessage('InitializeLoop', function()
 			if (not ComputedGoalPos[i]) then continue end
 			Zombie.Humanoid:MoveTo(ComputedGoalPos[i]);
 		end
+
+		t += deltaTime;
 	end)
 end)
 
@@ -62,8 +67,6 @@ Actor:BindToMessage('AddZombie', function(Zombie)
 			ZombieObj.HumanoidRootPart.Position,
 			ZombieObj.TargetNode
 		);
-
-		print(ZombieObj.Path)
 	end
 
 	ActorZombies[Zombie] = ZombieObj;
