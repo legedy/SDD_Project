@@ -1011,32 +1011,32 @@ end
 --// Walk and Sway
 local L_136_
 
-local L_140_ = 0
-local L_141_ = 0
-local L_142_ = 35 --This is the limit of the mouse input for the sway
-local L_143_ = -9 --This is the magnitude of the sway when you're unaimed
-local L_144_ = -9 --This is the magnitude of the sway when you're aimed
+local SwayX = 0
+local SwayY = 0
+local SwayDeltaLimit = 35 --This is the limit of the mouse input for the sway
+local UnaimedSway = -9 --This is the magnitude of the sway when you're unaimed
+local AimedSway = -9 --This is the magnitude of the sway when you're aimed
 
 --local Sprinting =false
-local L_145_ = SpringModule.new(Vector3.new())
-L_145_.s = 15
-L_145_.d = 0.5
+local SwaySpring = SpringModule.new(Vector3.new())
+SwaySpring.s = 15
+SwaySpring.d = 0.5
 
-game:GetService("UserInputService").InputChanged:Connect(function(L_272_arg1) --Get the mouse delta for the gun sway
-	if L_272_arg1.UserInputType == Enum.UserInputType.MouseMovement then
-		L_140_ = math.min(math.max(L_272_arg1.Delta.x, -L_142_), L_142_)
-		L_141_ = math.min(math.max(L_272_arg1.Delta.y, -L_142_), L_142_)
+game:GetService("UserInputService").InputChanged:Connect(function(InputObject) --Get the mouse delta for the gun sway
+	if InputObject.UserInputType == Enum.UserInputType.MouseMovement then
+		SwayX = math.min(math.max(InputObject.Delta.X, -SwayDeltaLimit), SwayDeltaLimit)
+		SwayY = math.min(math.max(InputObject.Delta.Y, -SwayDeltaLimit), SwayDeltaLimit)
 	end
 end)
 
 Mouse.Idle:Connect(function() --Reset the sway to 0 when the mouse is still
-	L_140_ = 0
-	L_141_ = 0
+	SwayX = 0
+	SwayY = 0
 end)
 
 local L_146_ = false
 local L_147_ = CFrame.new()
-local L_148_ = CFrame.new()
+local RecoilAddition = CFrame.new()
 
 local L_149_ 
 local L_150_
@@ -1124,33 +1124,41 @@ RenderStep:Connect(function()
 			L_147_ = CFrame.new()
 		end
 		
-		L_145_.t = Vector3.new(L_140_, L_141_, 0)
-		local L_283_ = L_145_.p
-		local L_284_ = L_283_.X / L_142_ * (IsAiming and L_144_ or L_143_)
-		local L_285_ = L_283_.Y / L_142_ * (IsAiming and L_144_ or L_143_)
+		SwaySpring.t = Vector3.new(SwayX, SwayY, 0)
+		local SwaySpringPosition = SwaySpring.p
+		local SwayFinalX = SwaySpringPosition.X / SwayDeltaLimit * (IsAiming and AimedSway or UnaimedSway)
+		local SwayFinalY = SwaySpringPosition.Y / SwayDeltaLimit * (IsAiming and AimedSway or UnaimedSway)
 		
-		Camera.CFrame = Camera.CFrame:lerp(Camera.CFrame * L_148_, 0.2)
+		Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * RecoilAddition, 0.2)
 		
 		if IsAiming then
-			L_136_ = CFrame.Angles(math.rad(-L_284_), math.rad(L_284_), math.rad(L_285_)) * CFrame.fromAxisAngle(Vector3.new(5, 0, -1), math.rad(L_284_))	
+			L_136_ =
+				CFrame.Angles(
+					math.rad(-SwayFinalX),
+					math.rad(SwayFinalX),
+					math.rad(SwayFinalY)
+				) * CFrame.fromAxisAngle(
+					Vector3.new(5, 0, -1),
+					math.rad(SwayFinalX)
+				);
 			L_149_ = 0
 			L_150_ = CFrame.new()
-		elseif IsAiming then
-			L_136_ = CFrame.Angles(math.rad(-L_285_), math.rad(-L_284_), math.rad(-L_284_)) * CFrame.fromAxisAngle(AnimBase.Position, math.rad(-L_285_))
-			L_149_ = L_149_ + 0.017			
+		else
+			L_136_ = CFrame.Angles(math.rad(-SwayFinalY), math.rad(-SwayFinalX), math.rad(-SwayFinalX)) * CFrame.fromAxisAngle(AnimBase.Position, math.rad(-SwayFinalY))
+			L_149_ = L_149_ + 0.017
 			L_150_ = L_282_
 		end
 		
 		if ClientConfig.SwayEnabled ==  true then
-			AnimBaseW.C0 = AnimBaseW.C0:lerp(L_162_ * L_136_ * L_147_ * L_150_, 0.1)
+			AnimBaseW.C0 = AnimBaseW.C0:Lerp(L_162_ * L_136_ * L_147_ * L_150_, 0.1)
 		else
-			AnimBaseW.C0 = AnimBaseW.C0:lerp(L_162_ * L_147_, 0.1)
+			AnimBaseW.C0 = AnimBaseW.C0:Lerp(L_162_ * L_147_, 0.1)
 		end		
 		
 		if IsSprinting and not IsExecutingAction and CanSprint and not IsAiming and not IsReloading and not Shooting then
-			AnimBaseW.C1 = AnimBaseW.C1:lerp(AnimBaseW.C0 * ClientConfig.SprintPos, 0.1)
+			AnimBaseW.C1 = AnimBaseW.C1:Lerp(AnimBaseW.C0 * ClientConfig.SprintPos, 0.1)
 		elseif not IsSprinting and not IsExecutingAction and not CanSprint and not IsAiming and not IsReloading and not Shooting and not isFiringModeChanging then
-			AnimBaseW.C1 = AnimBaseW.C1:lerp(CFrame.new() * L_134_, 0.05)
+			AnimBaseW.C1 = AnimBaseW.C1:Lerp(CFrame.new() * L_134_, 0.05)
 		end
 		
 		
@@ -1174,7 +1182,7 @@ RenderStep:Connect(function()
 			end
 			
 			if (Character.Head.Position - Camera.CoordinateFrame.p).magnitude < 2 then
-				AnimBaseW.C1 = AnimBaseW.C1:lerp(AnimBaseW.C0 * AimPart.CFrame:toObjectSpace(AnimBase.CFrame), ClientConfig.AimSpeed)
+				AnimBaseW.C1 = AnimBaseW.C1:Lerp(AnimBaseW.C0 * AimPart.CFrame:toObjectSpace(AnimBase.CFrame), ClientConfig.AimSpeed)
 				
 				MainGUI:WaitForChild('Sense'):WaitForChild('Sensitivity').Visible = true
 				MainGUI:WaitForChild('Sense'):WaitForChild('Sensitivity').Text = MouseSens
@@ -1182,7 +1190,7 @@ RenderStep:Connect(function()
 			end
 		elseif not IsAiming and not IsSprinting and L_15_ and not isFiringModeChanging then
 			if (Character.Head.Position - Camera.CoordinateFrame.p).magnitude < 2 then
-				AnimBaseW.C1 = AnimBaseW.C1:lerp(CFrame.new() * L_134_, ClientConfig.UnaimSpeed)
+				AnimBaseW.C1 = AnimBaseW.C1:Lerp(CFrame.new() * L_134_, ClientConfig.UnaimSpeed)
 				
 				MainGUI:WaitForChild('Sense'):WaitForChild('Sensitivity').Visible = false
 				MainGUI:WaitForChild('Sense'):WaitForChild('Sensitivity').Text = MouseSens
@@ -1210,15 +1218,15 @@ RenderStep:Connect(function()
 		
 		if Recoiling then
 			if not IsAiming then
-				L_148_ = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, ClientConfig.CamShake)), math.rad(L_90_ * math.random(-ClientConfig.CamShake, ClientConfig.CamShake)), math.rad(L_90_ * math.random(-ClientConfig.CamShake, ClientConfig.CamShake)))--CFrame.Angles(camrecoil,0,0)	
+				RecoilAddition = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, ClientConfig.CamShake)), math.rad(L_90_ * math.random(-ClientConfig.CamShake, ClientConfig.CamShake)), math.rad(L_90_ * math.random(-ClientConfig.CamShake, ClientConfig.CamShake)))--CFrame.Angles(camrecoil,0,0)	
 			else
-				L_148_ = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, ClientConfig.AimCamShake)), math.rad(L_90_ * math.random(-ClientConfig.AimCamShake, ClientConfig.AimCamShake)), math.rad(L_90_ * math.random(-ClientConfig.AimCamShake, ClientConfig.AimCamShake)))
+				RecoilAddition = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, ClientConfig.AimCamShake)), math.rad(L_90_ * math.random(-ClientConfig.AimCamShake, ClientConfig.AimCamShake)), math.rad(L_90_ * math.random(-ClientConfig.AimCamShake, ClientConfig.AimCamShake)))
 			end
 			--cam.CoordinateFrame = cam.CoordinateFrame *  CFrame.fromEulerAnglesXYZ(math.rad(camrecoil*math.random(0,3)), math.rad(camrecoil*math.random(-1,1)), math.rad(camrecoil*math.random(-1,1)))
-			AnimBaseW.C0 = AnimBaseW.C0:lerp(AnimBaseW.C0 * CFrame.new(0, 0, L_89_) * CFrame.Angles(-math.rad(L_91_), 0, 0), 0.3)
+			AnimBaseW.C0 = AnimBaseW.C0:Lerp(AnimBaseW.C0 * CFrame.new(0, 0, L_89_) * CFrame.Angles(-math.rad(L_91_), 0, 0), 0.3)
 		elseif not Recoiling then	
-			L_148_ = CFrame.Angles(0, 0, 0)
-			AnimBaseW.C0 = AnimBaseW.C0:lerp(CFrame.new(), 0.2)
+			RecoilAddition = CFrame.Angles(0, 0, 0)
+			AnimBaseW.C0 = AnimBaseW.C0:Lerp(CFrame.new(), 0.2)
 		end
 		
 		if AimMode then
