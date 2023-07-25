@@ -1,7 +1,7 @@
 --// Variables
 local L_1_ = script.Parent
-local L_2_ = L_1_.Parent.Parent
-local L_3_ = L_2_.Character
+local Player = L_1_.Parent.Parent
+local L_3_ = Player.Character
 local L_4_ = game.ReplicatedStorage:FindFirstChild('[WB] Leaderstat Network') or nil
 
 --// Declarables
@@ -116,17 +116,17 @@ local L_51_ = {
 
 --// Connections
 L_1_.Equipped:connect(function()
-	local L_57_ = L_3_:FindFirstChild('Torso')
-	local L_58_ = L_3_:FindFirstChild('Head')
-	local L_59_ = L_3_:FindFirstChild('HumanoidRootPart')
+	local Torso = L_3_:FindFirstChild('Torso')
+	local Head = L_3_:FindFirstChild('Head')
+	local HRP = L_3_:FindFirstChild('HumanoidRootPart')
 	
-	L_17_ = Instance.new("Motor6D", L_57_)
-	L_17_.Parent = L_57_
+	L_17_ = Instance.new("Motor6D", Torso)
+	L_17_.Parent = Torso
 	L_17_.Name = "Clone"
-	L_17_.Part0 = L_59_
-	L_17_.Part1 = L_58_
-	L_17_.C0 = L_57_:WaitForChild("Neck").C0	
-	L_17_.C1 = L_57_:WaitForChild("Neck").C1
+	L_17_.Part0 = HRP
+	L_17_.Part1 = Head
+	L_17_.C0 = Torso:WaitForChild("Neck").C0	
+	L_17_.C1 = Torso:WaitForChild("Neck").C1
 	
 -- Make the AnimBase
 	L_18_ = Instance.new("Part", L_3_)
@@ -138,7 +138,7 @@ L_1_.Equipped:connect(function()
 	
 	L_19_ = Instance.new("Motor6D")
 	L_19_.Part0 = L_18_
-	L_19_.Part1 = L_58_
+	L_19_.Part1 = Head
 	L_19_.Parent = L_18_
 	L_19_.Name = "AnimBaseW"
 	--AnimBaseW.C1 = gunSettings.StartPose	
@@ -216,16 +216,16 @@ L_1_.Equipped:connect(function()
 	L_3_.Torso:WaitForChild("Left Shoulder").Part1 = nil
 	
 	L_14_ = L_8_:WaitForChild('MainGui'):clone()
-	L_14_.Parent = L_2_.PlayerGui
+	L_14_.Parent = Player.PlayerGui
 	
-	L_27_ = L_58_:FindFirstChild('AHH') or L_6_:WaitForChild('AHH'):clone()
+	L_27_ = Head:FindFirstChild('AHH') or L_6_:WaitForChild('AHH'):clone()
 	L_27_.Parent = L_3_.Head
 	
 	if L_32_ then
 		L_32_:Destroy()
 	end
 	
-	L_33_:FireClient(L_2_, true, L_15_, L_18_, L_19_, L_22_, L_23_, L_17_)
+	L_33_:FireClient(Player, true, L_15_, L_18_, L_19_, L_22_, L_23_, L_17_)
 end)
 
 L_1_.Unequipped:connect(function()
@@ -274,7 +274,7 @@ L_1_.Unequipped:connect(function()
 		L_69_.AHH:Destroy()
 	end
 	
-	L_33_:FireClient(L_2_, false)
+	L_33_:FireClient(Player, false)
 	
 	if L_12_.HolsteringEnabled then
 		for L_77_forvar1, L_78_forvar2 in pairs(L_1_:GetChildren()) do
@@ -300,7 +300,7 @@ L_1_.Unequipped:connect(function()
 end)
 
 L_3_.Humanoid.Died:connect(function()	
-	L_33_:FireClient(L_2_, false)
+	L_33_:FireClient(Player, false)
 end)
 
 --// Events
@@ -324,8 +324,8 @@ local L_52_
 L_35_.OnServerEvent:connect(function(L_89_arg1, L_90_arg2, L_91_arg3)
 	L_90_arg2:TakeDamage(L_91_arg3)
 	if L_90_arg2.Health <= 0 and L_90_arg2 ~= L_52_ then
-		if L_4_ and L_4_:FindFirstChild(L_2_.Name) then
-			local L_92_ = L_4_[L_2_.Name]
+		if L_4_ and L_4_:FindFirstChild(Player.Name) then
+			local L_92_ = L_4_[Player.Name]
 			L_92_.Value = not L_92_.Value
 		end
 		L_39_:FireClient(L_89_arg1)
@@ -515,7 +515,7 @@ L_43_.OnServerEvent:connect(function(L_124_arg1, L_125_arg2)
 		if L_127_forvar2:IsA('Player') and L_127_forvar2.PlayerGui:FindFirstChild('MainGui') and L_127_forvar2.PlayerGui.MainGui:FindFirstChild('Shading') then
 			for L_128_forvar1, L_129_forvar2 in pairs(L_127_forvar2.Character:GetChildren()) do
 				if L_129_forvar2:IsA('Tool') and L_129_forvar2:FindFirstChild('Resource') and L_129_forvar2.Resource:FindFirstChild('Events') and L_129_forvar2.Resource.Events:FindFirstChild('ServerFXEvent') then
-					L_129_forvar2.Resource.Events.ServerFXEvent:FireClient(L_127_forvar2, L_125_arg2, L_2_)
+					L_129_forvar2.Resource.Events.ServerFXEvent:FireClient(L_127_forvar2, L_125_arg2, Player)
 				end	
 			end
 		end
