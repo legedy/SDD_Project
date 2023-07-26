@@ -22,8 +22,8 @@ local Settings = {
 	HeadDamage = 1000; -- If you set this to 100, there's a chance the player won't die because of the heal script	
 	
 --// Recoil Settings	
-	gunrecoil = -0.3; -- How much the gun recoils backwards when not aiming
-	camrecoil = 1.56; -- How much the camera flicks when not aiming
+	GunRecoil = -0.3; -- How much the gun recoils backwards when not aiming
+	CamRecoil = 1.56; -- How much the camera flicks when not aiming
 	AimGunRecoil = -0.3; -- How much the gun recoils backwards when aiming
 	AimCamRecoil = 1.63; -- How much the camera flicks when aiming
 	
@@ -81,8 +81,6 @@ local Settings = {
 	TracerColor = BrickColor.new('White');
 
 --// Dev Vars
-	CameraGo = true; -- No touchy
-	FirstPersonOnly = false; -- SET THIS TO FALSE TO ENABLE THIRD PERSON, TRUE FOR FIRST PERSON ONLY
 	TPSMouseIcon = 1415957732; -- Image used as the third person reticle
 	
 --// Extras

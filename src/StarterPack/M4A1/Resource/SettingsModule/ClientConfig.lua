@@ -22,8 +22,8 @@ local Settings = {
 	HeadDamage = 18; -- If you set this to 100, there's a chance the player won't die because of the heal script	
 	
 --// Recoil Settings	
-	gunrecoil = -0.6; -- How much the gun recoils backwards when not aiming
-	camrecoil = 4.10; -- How much the camera flicks when not aiming
+	GunRecoil = -0.6; -- How much the gun recoils backwards when not aiming
+	CamRecoil = 4.10; -- How much the camera flicks when not aiming
 	AimGunRecoil = -0.8; -- How much the gun recoils backwards when aiming
 	AimCamRecoil = 2.55; -- How much the camera flicks when aiming
 	

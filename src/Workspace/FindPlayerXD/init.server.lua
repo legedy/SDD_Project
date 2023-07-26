@@ -1,6 +1,10 @@
 local Players = game:GetService('Players');
 local RunService = game:GetService('RunService');
-local CurrentPlrChar, CurrentPlayerNode = Players.LocalPlayer.CharacterAdded:Wait(), 1;
+local UserInputService = game:GetService('UserInputService');
+local CurrentPlayer = Players.LocalPlayer;
+local CurrentPlrChar, CurrentPlayerNode = CurrentPlayer.CharacterAdded:Wait(), 1;
+
+CurrentPlayer.CameraMode = Enum.CameraMode.LockFirstPerson;
 
 local Pathfinder = require(script.Pathfinder);
 local AllNodes, BakedPaths = Pathfinder:Init();

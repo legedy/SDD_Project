@@ -1334,19 +1334,19 @@ L_106_:connect(function()
 			end	
 			
 			if not L_65_ then
-				L_90_ = L_24_.camrecoil
-				L_89_ = L_24_.gunrecoil
+				L_90_ = L_24_.CamRecoil
+				L_89_ = L_24_.GunRecoil
 				L_91_ = L_24_.Kickback
 			elseif L_65_ then
 				if L_93_ == 1 then
-					L_90_ = L_24_.camrecoil / 1.5
-					L_89_ = L_24_.gunrecoil / 1.5
+					L_90_ = L_24_.CamRecoil / 1.5
+					L_89_ = L_24_.GunRecoil / 1.5
 					L_91_ = L_24_.Kickback / 1.5
 				end
 				
 				if L_93_ == 2 then
-					L_90_ = L_24_.camrecoil / 2
-					L_89_ = L_24_.gunrecoil / 2
+					L_90_ = L_24_.CamRecoil / 2
+					L_89_ = L_24_.GunRecoil / 2
 					L_91_ = L_24_.Kickback / 2
 				end
 			end	
@@ -1354,11 +1354,11 @@ L_106_:connect(function()
 		
 		if Recoiling then
 			if not L_64_ then
-				L_148_ = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, L_24_.CamShake)), math.rad(L_90_ * math.random(-L_24_.CamShake, L_24_.CamShake)), math.rad(L_90_ * math.random(-L_24_.CamShake, L_24_.CamShake)))--CFrame.Angles(camrecoil,0,0)	
+				L_148_ = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, L_24_.CamShake)), math.rad(L_90_ * math.random(-L_24_.CamShake, L_24_.CamShake)), math.rad(L_90_ * math.random(-L_24_.CamShake, L_24_.CamShake)))--CFrame.Angles(CamRecoil,0,0)	
 			else
 				L_148_ = CFrame.fromEulerAnglesXYZ(math.rad(L_90_ * math.random(0, L_24_.AimCamShake)), math.rad(L_90_ * math.random(-L_24_.AimCamShake, L_24_.AimCamShake)), math.rad(L_90_ * math.random(-L_24_.AimCamShake, L_24_.AimCamShake)))
 			end
-			--cam.CoordinateFrame = cam.CoordinateFrame *  CFrame.fromEulerAnglesXYZ(math.rad(camrecoil*math.random(0,3)), math.rad(camrecoil*math.random(-1,1)), math.rad(camrecoil*math.random(-1,1)))
+			--cam.CoordinateFrame = cam.CoordinateFrame *  CFrame.fromEulerAnglesXYZ(math.rad(CamRecoil*math.random(0,3)), math.rad(CamRecoil*math.random(-1,1)), math.rad(CamRecoil*math.random(-1,1)))
 			L_45_.C0 = L_45_.C0:lerp(L_45_.C0 * CFrame.new(0, 0, L_89_) * CFrame.Angles(-math.rad(L_91_), 0, 0), 0.3)
 		elseif not Recoiling then	
 			L_148_ = CFrame.Angles(0, 0, 0)
@@ -1380,8 +1380,8 @@ L_106_:connect(function()
 				L_42_:WaitForChild('Sense'):WaitForChild('Sensitivity').Text = L_51_
 				L_107_.MouseDeltaSensitivity = L_51_
 			elseif (L_3_.Head.Position - L_5_.CoordinateFrame.p).magnitude < 2 and not L_64_ and not L_65_ then
-				L_90_ = L_24_.camrecoil
-				L_89_ = L_24_.gunrecoil
+				L_90_ = L_24_.CamRecoil
+				L_89_ = L_24_.GunRecoil
 				L_91_ = L_24_.Kickback
 				
 				L_42_:WaitForChild('Sense'):WaitForChild('Sensitivity').Visible = false
