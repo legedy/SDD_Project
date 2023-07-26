@@ -1,5 +1,5 @@
 repeat
-	wait()
+	task.wait()
 until game.Players.LocalPlayer.Character
 wait(0.5)
 
@@ -21,9 +21,7 @@ local TweenService = game:GetService('TweenService')
 
 --// Declarables
 local L_15_ = false
-
 local L_16_ = false
-local L_17_ = true
 
 local GunResources = Gun:WaitForChild('Resource')
 local Effects = GunResources:WaitForChild('FX')
@@ -59,17 +57,10 @@ local CurrenAimZoom = ClientConfig.AimZoom
 local MouseSens = ClientConfig.MouseSensitivity
 local MouseDeltaSens = UIS.MouseDeltaSensitivity
 
-local L_53_ = game.ReplicatedStorage:FindFirstChild('SoundIso_Network') or nil
-local L_54_
-if L_53_ then
-	L_54_ = L_53_:WaitForChild('EventConnection')
-end
-
 --// Weapon Parts
 local AimPart = Gun:WaitForChild('AimPart')
 local Grip = Gun:WaitForChild('Grip')
 local FirePart = Gun:WaitForChild('FirePart')
-local L_60_
 local Mag = Gun:WaitForChild('Mag')
 local Bolt = Gun:WaitForChild('Bolt')
 
@@ -83,17 +74,10 @@ local CanShoot = true
 local IsExecutingAction = false
 local IsSprintKeyDown = false
 local CanSprint = false
-local isBoltBack = false
 local isBoltForward = false
 local isIdle = false
-local isInspecting = false
 local isInputBlocked = false
 local isInMenu = false
-local isFiringModeChanging = false
-
-local hasExplosiveEnabled = false
-local previousFireMode = true
-local L_85_ = true
 
 local L_86_ = false
 
@@ -101,33 +85,9 @@ local L_89_
 local L_90_
 local L_91_
 
-local L_92_ = ClientConfig.FireMode
-
+local FireType = ClientConfig.FireMode
 local L_93_ = 0
-local L_94_ = false
-local L_95_ = true
-local L_96_ = false
-
 local L_97_ = 70
-
---// Tables
-local L_98_ = {
-	
-	"285421759";
-	"151130102";
-	"151130171";
-	"285421804";
-	"287769483";
-	"287769415";
-	"285421687";
-	"287769261";
-	"287772525";
-	"287772445";
-	"287772351";
-	"285421819";
-	"287772163";
-	
-}
 
 local L_99_ = {
 	
@@ -188,7 +148,7 @@ L_101_.Name = "BulletModel: " .. Player.Name
 
 local L_102_
 
-local L_103_ = ClientConfig.Ammo
+local AmmoInMag = ClientConfig.Ammo
 local TotalAmmo = ClientConfig.StoredAmmo * ClientConfig.MagCount
 
 local L_105_ = ClientConfig.ExplosiveAmmo
@@ -335,48 +295,24 @@ function ScreamCalculation()
 end
 
 function UpdateAmmo()
-	Ammo.Text = L_103_
+	Ammo.Text = AmmoInMag
 	AmmoBG.Text = Ammo.Text
 	
 	MagCount.Text = '| ' .. math.ceil(TotalAmmo / ClientConfig.StoredAmmo)
 	MagCountBG.Text = MagCount.Text
 	
-	if L_92_ == 1 then
+	if FireType == 1 then
 		Mode1.BackgroundTransparency = 0
 		Mode2.BackgroundTransparency = 0.7
 		Mode3.BackgroundTransparency = 0.7
 		Mode4.BackgroundTransparency = 0.7
 		Mode5.BackgroundTransparency = 0.7
-	elseif L_92_ == 2 then
+	elseif FireType == 2 then
 		Mode1.BackgroundTransparency = 0
 		Mode2.BackgroundTransparency = 0
 		Mode3.BackgroundTransparency = 0
 		Mode4.BackgroundTransparency = 0
 		Mode5.BackgroundTransparency = 0
-	elseif L_92_ == 3 then
-		Mode1.BackgroundTransparency = 0
-		Mode2.BackgroundTransparency = 0
-		Mode3.BackgroundTransparency = 0
-		Mode4.BackgroundTransparency = 0.7
-		Mode5.BackgroundTransparency = 0.7
-	elseif L_92_ == 4 then
-		Mode1.BackgroundTransparency = 0
-		Mode2.BackgroundTransparency = 0
-		Mode3.BackgroundTransparency = 0
-		Mode4.BackgroundTransparency = 0
-		Mode5.BackgroundTransparency = 0.7
-	elseif L_92_ == 5 then
-		Mode1.BackgroundTransparency = 0
-		Mode2.BackgroundTransparency = 0.7
-		Mode3.BackgroundTransparency = 0
-		Mode4.BackgroundTransparency = 0.7
-		Mode5.BackgroundTransparency = 0.7
-	elseif L_92_ == 6 then
-		Mode1.BackgroundTransparency = 0
-		Mode2.BackgroundTransparency = 0.7
-		Mode3.BackgroundTransparency = 0
-		Mode4.BackgroundTransparency = 0
-		Mode5.BackgroundTransparency = 0.7
 	end
 	
 end
@@ -409,10 +345,6 @@ Equipped.OnClientEvent:Connect(function(L_191_arg1, _, AnimBaseParam, AnimBaseWP
 		LeftArmW = LAW
 		NeckClone = CloneNeckJoint
 		L_49_ = Bolt.Bolt
-		
-		if Gun:FindFirstChild('FirePart2') then
-			L_60_ = Gun.FirePart2
-		end
 		
 		if ClientConfig.FirstPersonOnly then
 			Player.CameraMode = Enum.CameraMode.LockFirstPerson
@@ -488,13 +420,9 @@ function CreateBullet(L_200_arg1)
 	L_205_.Transparency = 1
 	local L_208_ = Instance.new('BodyForce', L_205_)
 		
-	if not hasExplosiveEnabled then
-		L_208_.Force = ClientConfig.BulletPhysics
-		L_205_.Velocity = L_202_ * ClientConfig.BulletSpeed
-	else
-		L_208_.Force = ClientConfig.ExploPhysics
-		L_205_.Velocity = L_202_ * ClientConfig.ExploSpeed
-	end
+	--> Bullet force
+	L_208_.Force = ClientConfig.BulletPhysics
+	L_205_.Velocity = L_202_ * ClientConfig.BulletSpeed
 		
 	local L_209_ = Instance.new('Attachment', L_205_)
 	L_209_.Position = Vector3.new(0.1, 0, 0)
@@ -515,7 +443,7 @@ function CreateBullet(L_200_arg1)
 		L_212_.Color = ColorSequence.new(ClientConfig.TracerColor.Color)
 	end
 		
-	if Gun:FindFirstChild('Shell') and not hasExplosiveEnabled then	
+	if Gun:FindFirstChild('Shell') then
 		CreateShell()	
 	end	
 		
@@ -545,67 +473,63 @@ function CheckForHumanoid(L_213_arg1)
 end
 
 function CastRay(L_216_arg1)
-	local L_217_, L_218_, L_219_
-	local L_220_ = AimPart.Position;
+	local HitObject, HitPosition, HitNormal
+	local AimPartPos = AimPart.Position;
 	local L_221_ = L_216_arg1.Position;
-	local L_222_ = 0
-
-	local L_223_ = hasExplosiveEnabled	
+	local BulletDistTravelled = 0
 	
 	while true do
-		RenderStep:wait()
+		RenderStep:Wait()
 		L_221_ = L_216_arg1.Position;
-		L_222_ = L_222_ + (L_221_ - L_220_).magnitude
-		L_217_, L_218_, L_219_ = workspace:FindPartOnRayWithIgnoreList(Ray.new(L_220_, (L_221_ - L_220_)), IgnoreList);
-		local L_224_ = Vector3.new(0, 1, 0):Cross(L_219_)
-		local L_225_ = math.asin(L_224_.magnitude) -- division by 1 is redundant
-		if L_222_ > ClientConfig.BulletDecay then
+		BulletDistTravelled = BulletDistTravelled + (L_221_ - AimPartPos).magnitude
+		HitObject, HitPosition, HitNormal = workspace:FindPartOnRayWithIgnoreList(Ray.new(AimPartPos, (L_221_ - AimPartPos)), IgnoreList);
+		
+		local L_224_ = Vector3.new(0, 1, 0):Cross(HitNormal)
+		local L_225_ = math.asin(L_224_.Magnitude) -- division by 1 is redundant
+
+
+		if BulletDistTravelled > ClientConfig.BulletDecay then
 			L_216_arg1:Destroy()
 			break
 		end
-		if L_217_ and (L_217_ and L_217_.Transparency >= 1 or L_217_.CanCollide == false) and L_217_.Name ~= 'Right Arm' and L_217_.Name ~= 'Left Arm' and L_217_.Name ~= 'Right Leg' and L_217_.Name ~= 'Left Leg' and L_217_.Name ~= 'Armor' then
-			table.insert(IgnoreList, L_217_)
+
+		if HitObject and (HitObject and HitObject.Transparency >= 1 or HitObject.CanCollide == false) and HitObject.Name ~= 'Right Arm' and HitObject.Name ~= 'Left Arm' and HitObject.Name ~= 'Right Leg' and HitObject.Name ~= 'Left Leg' and HitObject.Name ~= 'Armor' then
+			table.insert(IgnoreList, HitObject)
 		end
 	
-		if L_217_ then
-			L_224_ = Vector3.new(0, 1, 0):Cross(L_219_)
-			L_225_ = math.asin(L_224_.magnitude) -- division by 1 is redundant
+		if HitObject then
 		
-			ServerFXEvent:FireServer(L_218_)
+			ServerFXEvent:FireServer(HitPosition)
 		
-			local L_226_ = CheckForHumanoid(L_217_)
+			local L_226_ = CheckForHumanoid(HitObject)
 			if L_226_ == false then
 				L_216_arg1:Destroy()
-				HitEvent:InvokeServer(L_218_, L_224_, L_225_, L_219_, "Part", L_217_)
+				HitEvent:InvokeServer(HitPosition, L_224_, L_225_, HitNormal, "Part", HitObject)
 			elseif L_226_ == true then
 				L_216_arg1:Destroy()
-				HitEvent:InvokeServer(L_218_, L_224_, L_225_, L_219_, "Human", L_217_)
+				HitEvent:InvokeServer(HitPosition, L_224_, L_225_, HitNormal, "Human", HitObject)
 			end
 		end
 	
-		if L_217_ and L_223_ then
-			ExplosionEvent:FireServer(L_218_)
-		end
-	
-		if L_217_ then
-			local L_229_, L_230_ = CheckForHumanoid(L_217_)
+		if HitObject then
+			local L_229_, L_230_ = CheckForHumanoid(HitObject)
 			if L_229_ then
 				CreateOwner:FireServer(L_230_)
 				if ClientConfig.AntiTK then
 					if game.Players:FindFirstChild(L_230_.Parent.Name) and game.Players:FindFirstChild(L_230_.Parent.Name).TeamColor ~= Player.TeamColor or L_230_.Parent:FindFirstChild('Vars') and game.Players:FindFirstChild(L_230_.Parent:WaitForChild('Vars'):WaitForChild('BotID').Value) and Player.TeamColor ~= L_230_.Parent:WaitForChild('Vars'):WaitForChild('teamColor').Value then
-						if L_217_.Name == 'Head' then
+						if HitObject.Name == 'Head' then
 							DamageEvent:FireServer(L_230_, ClientConfig.HeadDamage)
 							local L_231_ = Effects:WaitForChild('BodyHit'):clone()
 							L_231_.Parent = Player.PlayerGui
 							L_231_:Play()
 							game:GetService("Debris"):addItem(L_231_, L_231_.TimeLength)
 						end
-						if L_217_.Name ~= 'Head' and not (L_217_.Parent:IsA('Accessory') or L_217_.Parent:IsA('Hat')) then
-							if L_217_.Name ~= 'Torso' and L_217_.Name ~= 'HumanoidRootPart' and L_217_.Name ~= 'Armor' then
+						if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
+							if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
 								DamageEvent:FireServer(L_230_, ClientConfig.LimbDamage)
-							elseif L_217_.Name == 'Torso' or L_217_.Name == 'HumanoidRootPart' and L_217_.Name ~= 'Armor'  then
+							elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor'  then
 								DamageEvent:FireServer(L_230_, ClientConfig.BaseDamage)
-							elseif L_217_.Name == 'Armor' then
+							elseif HitObject.Name == 'Armor' then
 								DamageEvent:FireServer(L_230_, ClientConfig.ArmorDamage)
 							end
 							local L_232_ = Effects:WaitForChild('BodyHit'):clone()
@@ -613,7 +537,7 @@ function CastRay(L_216_arg1)
 							L_232_:Play()
 							game:GetService("Debris"):addItem(L_232_, L_232_.TimeLength)
 						end
-						if (L_217_.Parent:IsA('Accessory') or L_217_.Parent:IsA('Hat')) then
+						if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
 							DamageEvent:FireServer(L_230_, ClientConfig.HeadDamage)
 							local L_233_ = Effects:WaitForChild('BodyHit'):clone()
 							L_233_.Parent = Player.PlayerGui
@@ -622,19 +546,19 @@ function CastRay(L_216_arg1)
 						end
 					end
 				else
-					if L_217_.Name == 'Head' then
+					if HitObject.Name == 'Head' then
 						DamageEvent:FireServer(L_230_, ClientConfig.HeadDamage)
 						local L_234_ = Effects:WaitForChild('BodyHit'):clone()
 						L_234_.Parent = Player.PlayerGui
 						L_234_:Play()
 						game:GetService("Debris"):addItem(L_234_, L_234_.TimeLength)
 					end
-					if L_217_.Name ~= 'Head' and not (L_217_.Parent:IsA('Accessory') or L_217_.Parent:IsA('Hat')) then
-						if L_217_.Name ~= 'Torso' and L_217_.Name ~= 'HumanoidRootPart' and L_217_.Name ~= 'Armor' then
+					if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
+						if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
 							DamageEvent:FireServer(L_230_, ClientConfig.LimbDamage)
-						elseif L_217_.Name == 'Torso' or L_217_.Name == 'HumanoidRootPart' and L_217_.Name ~= 'Armor' then
+						elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
 							DamageEvent:FireServer(L_230_, ClientConfig.BaseDamage)
-						elseif L_217_.Name == 'Armor' then
+						elseif HitObject.Name == 'Armor' then
 							DamageEvent:FireServer(L_230_, ClientConfig.ArmorDamage)
 						end
 						local L_235_ = Effects:WaitForChild('BodyHit'):clone()
@@ -642,7 +566,7 @@ function CastRay(L_216_arg1)
 						L_235_:Play()
 						game:GetService("Debris"):addItem(L_235_, L_235_.TimeLength)
 					end
-					if (L_217_.Parent:IsA('Accessory') or L_217_.Parent:IsA('Hat')) then
+					if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
 						DamageEvent:FireServer(L_230_, ClientConfig.HeadDamage)
 						local L_236_ = Effects:WaitForChild('BodyHit'):clone()
 						L_236_.Parent = Player.PlayerGui
@@ -653,10 +577,10 @@ function CastRay(L_216_arg1)
 			end
 		end
 	
-		if L_217_ and L_217_.Parent:FindFirstChild("Humanoid") then
-			return L_217_, L_218_;
+		if HitObject and HitObject.Parent:FindFirstChild("Humanoid") then
+			return HitObject, HitPosition;
 		end
-		L_220_ = L_221_;
+		AimPartPos = L_221_;
 	end
 end
 
@@ -666,14 +590,10 @@ function fireSemi()
 		Recoiling = true
 		Shooting = true
 		
-		if L_54_ then
-			L_54_:FireServer(FirePart:WaitForChild('Fire').SoundId, FirePart)
-		else
-			FirePart:WaitForChild('Fire'):Play()	
-		end
+		FirePart:WaitForChild('Fire'):Play()
 		ShootEvent:FireServer()
 		L_102_ = CreateBullet(ClientConfig.BulletSpread)
-		L_103_ = L_103_ - 1
+		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		RecoilFront = true
 		task.spawn(function()
@@ -686,7 +606,7 @@ function fireSemi()
 				if ClientConfig.CanSlideLock == false then
 					BoltingForwardAnim()
 				elseif ClientConfig.CanSlideLock == true then
-					if L_103_ > 0 then
+					if AmmoInMag > 0 then
 						BoltingForwardAnim()
 					end
 				end
@@ -701,184 +621,18 @@ function fireSemi()
 		wait(ClientConfig.Firerate)
 		
 		CanShoot = not JamCalculation()
-		Shooting = false
-	end
-end
-
-function fireExplo()
-	if L_15_ then
-		CanShoot = false
-		Recoiling = true
-		Shooting = true
-		if L_54_ then
-			L_54_:FireServer(L_60_:WaitForChild('Fire').SoundId, L_60_)
-		else
-			L_60_:WaitForChild('Fire'):Play()	
-		end
-		ShootEvent:FireServer()
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
-		L_105_ = L_105_ - 1
-		UpdateAmmo()
-		RecoilFront = true
-		local L_240_, L_241_ = spawn(function()
-			CastRay(L_102_)
-		end)
-		
-		delay(ClientConfig.Firerate / 2, function()
-			Recoiling = false
-			RecoilFront = false
-		end)		
-			
-		CanShoot = false
-		Shooting = false
-	end
-end
-
-function fireShot()
-	if L_15_ then
-		CanShoot = false
-		Recoiling = true
-		Shooting = true
-		RecoilFront = true
-		
-		if L_54_ then
-			L_54_:FireServer(FirePart:WaitForChild('Fire').SoundId, FirePart)
-		else
-			FirePart:WaitForChild('Fire'):Play()	
-		end
-		ShootEvent:FireServer()
-		for L_243_forvar1 = 1, ClientConfig.ShotNum do
-			spawn(function()
-				L_102_ = CreateBullet(ClientConfig.BulletSpread)
-			end)
-			local L_244_, L_245_ = spawn(function()
-				CastRay(L_102_)
-			end)
-		end
-						
-		for L_246_forvar1, L_247_forvar2 in pairs(FirePart:GetChildren()) do
-			if L_247_forvar2.Name:sub(1, 7) == "FlashFX" then
-				L_247_forvar2.Enabled = true
-			end
-		end
-	
-		delay(1 / 30, function()
-			for L_248_forvar1, L_249_forvar2 in pairs(FirePart:GetChildren()) do
-				if L_249_forvar2.Name:sub(1, 7) == "FlashFX" then
-					L_249_forvar2.Enabled = false
-				end
-			end
-		end)
-		
-		if ClientConfig.CanBolt == true then
-			BoltingBackAnim()
-			delay(ClientConfig.Firerate / 2, function()
-				if ClientConfig.CanSlideLock == false then
-					BoltingForwardAnim()
-				elseif ClientConfig.CanSlideLock == true then
-					if L_103_ > 0 then
-						BoltingForwardAnim()
-					end
-				end
-			end)
-		end
-		
-		delay(ClientConfig.Firerate / 2, function()
-			Recoiling = false
-			RecoilFront = false
-		end)
-		L_103_ = L_103_ - 1
-		UpdateAmmo()
-		wait(ClientConfig.Firerate)
-		
-		isInspecting = true
-		BoltBackAnim()
-		BoltForwardAnim()
-		IdleAnim()
-		isInspecting = false
-		
-		CanShoot = not JamCalculation()
-		
-		Shooting = false
-	end
-end
-
-function fireBoltAction()
-	if L_15_ then
-		CanShoot = false
-		Recoiling = true
-		Shooting = true
-		
-		if L_54_ then
-			L_54_:FireServer(FirePart:WaitForChild('Fire').SoundId, FirePart)
-		else
-			FirePart:WaitForChild('Fire'):Play()	
-		end
-		ShootEvent:FireServer()
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
-		L_103_ = L_103_ - 1
-		UpdateAmmo()
-		RecoilFront = true
-		local L_250_, L_251_ = spawn(function()
-			CastRay(L_102_)
-		end)
-						
-		for L_253_forvar1, L_254_forvar2 in pairs(FirePart:GetChildren()) do
-			if L_254_forvar2.Name:sub(1, 7) == "FlashFX" then
-				L_254_forvar2.Enabled = true
-			end
-		end
-	
-		delay(1 / 30, function()
-			for L_255_forvar1, L_256_forvar2 in pairs(FirePart:GetChildren()) do
-				if L_256_forvar2.Name:sub(1, 7) == "FlashFX" then
-					L_256_forvar2.Enabled = false
-				end
-			end
-		end)
-		
-		if ClientConfig.CanBolt == true then
-			BoltingBackAnim()
-			delay(ClientConfig.Firerate / 2, function()
-				if ClientConfig.CanSlideLock == false then
-					BoltingForwardAnim()
-				elseif ClientConfig.CanSlideLock == true then
-					if L_103_ > 0 then
-						BoltingForwardAnim()
-					end
-				end
-			end)
-		end
-		
-		delay(ClientConfig.Firerate / 2, function()
-			Recoiling = false
-			RecoilFront = false
-		end)
-		wait(ClientConfig.Firerate)
-		
-		isInspecting = true
-		BoltBackAnim()
-		BoltForwardAnim()
-		IdleAnim()
-		isInspecting = false
-		
-		CanShoot = not JamCalculation()
-		
 		Shooting = false
 	end
 end
 
 function fireAuto()
-	while not Shooting and L_103_ > 0 and Mouse1Holding and CanShoot and L_15_ do
+	while not Shooting and AmmoInMag > 0 and Mouse1Holding and CanShoot and L_15_ do
 		CanShoot = false
 		Recoiling = true
-		if L_54_ then
-			L_54_:FireServer(FirePart:WaitForChild('Fire').SoundId, FirePart)
-		else
-			FirePart:WaitForChild('Fire'):Play()	
-		end
+
+		FirePart:WaitForChild('Fire'):Play()
 		ShootEvent:FireServer()
-		L_103_ = L_103_ - 1
+		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		Shooting = true
 		RecoilFront = true
@@ -887,14 +641,14 @@ function fireAuto()
 			CastRay(L_102_)
 		end)
 					
-		for L_260_forvar1, L_261_forvar2 in pairs(FirePart:GetChildren()) do
+		for _, L_261_forvar2 in pairs(FirePart:GetChildren()) do
 			if L_261_forvar2.Name:sub(1, 7) == "FlashFX" then
 				L_261_forvar2.Enabled = true
 			end
 		end
 	
-		delay(1 / 30, function()
-			for L_262_forvar1, L_263_forvar2 in pairs(FirePart:GetChildren()) do
+		task.delay(1 / 30, function()
+			for _, L_263_forvar2 in pairs(FirePart:GetChildren()) do
 				if L_263_forvar2.Name:sub(1, 7) == "FlashFX" then
 					L_263_forvar2.Enabled = false
 				end
@@ -907,7 +661,7 @@ function fireAuto()
 				if ClientConfig.CanSlideLock == false then
 					BoltingForwardAnim()
 				elseif ClientConfig.CanSlideLock == true then
-					if L_103_ > 0 then
+					if AmmoInMag > 0 then
 						BoltingForwardAnim()
 					end
 				end
@@ -927,83 +681,12 @@ function fireAuto()
 	end
 end
 
-function fireBurst()
-	if not Shooting and L_103_ > 0 and Mouse1Holding and L_15_ then
-		for L_264_forvar1 = 1, ClientConfig.BurstNum do
-			if L_103_ > 0 and Mouse1Holding then
-				CanShoot = false
-				Recoiling = true
-				
-				if L_54_ then
-					L_54_:FireServer(FirePart:WaitForChild('Fire').SoundId, FirePart)
-				else
-					FirePart:WaitForChild('Fire'):Play()	
-				end
-				ShootEvent:FireServer()
-				L_102_ = CreateBullet(ClientConfig.BulletSpread)
-				local L_265_, L_266_ = spawn(function()
-					CastRay(L_102_)
-				end)
-					
-				for L_268_forvar1, L_269_forvar2 in pairs(FirePart:GetChildren()) do
-					if L_269_forvar2.Name:sub(1, 7) == "FlashFX" then
-						L_269_forvar2.Enabled = true
-					end
-				end
-		
-				delay(1 / 30, function()
-					for L_270_forvar1, L_271_forvar2 in pairs(FirePart:GetChildren()) do
-						if L_271_forvar2.Name:sub(1, 7) == "FlashFX" then
-							L_271_forvar2.Enabled = false
-						end
-					end
-				end)
-			
-				if ClientConfig.CanBolt == true then
-					BoltingBackAnim()
-					delay(ClientConfig.Firerate / 2, function()
-						if ClientConfig.CanSlideLock == false then
-							BoltingForwardAnim()
-						elseif ClientConfig.CanSlideLock == true then
-							if L_103_ > 0 then
-								BoltingForwardAnim()
-							end
-						end
-					end)
-				end
-			
-				L_103_ = L_103_ - 1
-				UpdateAmmo()
-				RecoilFront = true
-				delay(ClientConfig.Firerate / 2, function()
-					Recoiling = false
-					RecoilFront = false
-				end)
-				wait(ClientConfig.Firerate)
-			
-				CanShoot = not JamCalculation()
-		
-			end
-			Shooting = true
-		end
-		Shooting = false
-	end
-end
-
 function Shoot()
 	if L_15_ and CanShoot then
-		if L_92_ == 1 then
+		if FireType == 1 then
 			fireSemi()
-		elseif L_92_ == 2 then
+		elseif FireType == 2 then
 			fireAuto()
-		elseif L_92_ == 3 then
-			fireBurst()	
-		elseif L_92_ == 4 then
-			fireBoltAction()
-		elseif L_92_ == 5 then
-			fireShot()
-		elseif L_92_ == 6 then
-			fireExplo()
 		end
 	end
 end
@@ -1034,61 +717,33 @@ Mouse.Idle:Connect(function() --Reset the sway to 0 when the mouse is still
 	SwayY = 0
 end)
 
-local L_146_ = false
+local IsMoving = false
 local L_147_ = CFrame.new()
 local RecoilAddition = CFrame.new()
 
-local L_149_ 
-local L_150_
-local L_151_
-local L_152_
+local L_149_ = 0
+local L_150_ = CFrame.new()
+local L_151_ = 0.05
+local L_152_ = 2
 
-local L_153_
-local L_154_
-local L_155_
-
-if not ClientConfig.TacticalModeEnabled then
-	L_149_ = 0
-	L_150_ = CFrame.new()
-	L_151_ = 0.1
-	L_152_ = 2
-	
-	L_153_ = 0
-	L_154_ = .2
-	L_155_ = 17
-else
-	L_149_ = 0
-	L_150_ = CFrame.new()
-	L_151_ = 0.05
-	L_152_ = 2
-	
-	L_153_ = 0
-	L_154_ = 0.09
-	L_155_ = 11
-end
-
-local L_156_ = 0
-local L_157_ = 5
-local L_158_ = .3
+local SwayTime = 0
+local VerticalSwayAmp = 0.09
+local SwaySpeed = 11
 
 local L_159_, L_160_ = 0, 0
 
 local L_161_ = nil
 local L_162_ = nil
-local L_163_ = nil
 
 Character.Humanoid.Running:Connect(function(L_273_arg1)
 	if L_273_arg1 > 1 then
-		L_146_ = true
+		IsMoving = true
 	else
-		L_146_ = false
+		IsMoving = false
 	end
 end)
 
---// Renders
-local L_164_
-
-RenderStep:Connect(function()
+RenderStep:Connect(function(deltaTime)
 	if L_15_ then
 		L_159_, L_160_ = L_159_ or 0, L_160_ or 0
 		if L_162_ == nil or L_161_ == nil then
@@ -1096,31 +751,29 @@ RenderStep:Connect(function()
 			L_161_ = AnimBaseW.C1
 		end
 		
-		local L_274_ = (math.sin(L_153_ * L_155_ / 2) * L_154_)
-		local L_275_ = (math.sin(L_153_ * L_155_) * L_154_)
-		local L_276_ = CFrame.new(L_274_, L_275_, 0.02)
-		
-		local L_277_ = (math.sin(L_153_ * L_155_ / 2) * L_154_)
-		local L_278_ = (math.sin(L_153_ * L_155_) * L_154_)
-		local L_279_ = CFrame.new(L_274_, L_275_, 0.02) * CFrame.Angles((math.cos(L_153_ * L_155_) * L_154_), (math.cos(L_153_ * L_155_ / 2) * L_154_), 0)
+		local L_274_ = (math.sin(SwayTime * SwaySpeed / 2) * VerticalSwayAmp)
+		local L_275_ = (math.sin(SwayTime * SwaySpeed) * VerticalSwayAmp)
+
+		local L_279_ =
+			CFrame.new(
+				L_274_,
+				L_275_,
+				0.02
+			) * CFrame.Angles(
+				(math.cos(SwayTime * SwaySpeed) * VerticalSwayAmp),
+				(math.cos(SwayTime * SwaySpeed / 2) * VerticalSwayAmp),
+				0
+			);
 		
 		local L_280_ = (math.sin(L_149_ * L_152_ / 2) * L_151_)
 		local L_281_ = (math.cos(L_149_ * L_152_) * L_151_)
 		local L_282_ = CFrame.new(L_280_, L_281_, 0.02)
 		
-		if L_146_ then
-			L_153_ = L_153_ + .017
-			if ClientConfig.WalkAnimEnabled == true then
-				if ClientConfig.TacticalModeEnabled then
-					L_147_ = L_279_
-				else
-					L_147_ = L_276_
-				end
-			else
-				L_147_ = CFrame.new()
-			end
+		if IsMoving then
+			SwayTime = SwayTime + deltaTime
+			L_147_ = L_279_
 		else
-			L_153_ = 0
+			SwayTime = 0
 			L_147_ = CFrame.new()
 		end
 		
@@ -1149,15 +802,12 @@ RenderStep:Connect(function()
 			L_150_ = L_282_
 		end
 		
-		if ClientConfig.SwayEnabled ==  true then
-			AnimBaseW.C0 = AnimBaseW.C0:Lerp(L_162_ * L_136_ * L_147_ * L_150_, 0.1)
-		else
-			AnimBaseW.C0 = AnimBaseW.C0:Lerp(L_162_ * L_147_, 0.1)
-		end		
+		--> Sway
+		AnimBaseW.C0 = AnimBaseW.C0:Lerp(L_162_ * L_136_ * L_147_ * L_150_, 0.1)
 		
 		if IsSprinting and not IsExecutingAction and CanSprint and not IsAiming and not IsReloading and not Shooting then
 			AnimBaseW.C1 = AnimBaseW.C1:Lerp(AnimBaseW.C0 * ClientConfig.SprintPos, 0.1)
-		elseif not IsSprinting and not IsExecutingAction and not CanSprint and not IsAiming and not IsReloading and not Shooting and not isFiringModeChanging then
+		elseif not IsSprinting and not IsExecutingAction and not CanSprint and not IsAiming and not IsReloading and not Shooting then
 			AnimBaseW.C1 = AnimBaseW.C1:Lerp(CFrame.new() * L_134_, 0.05)
 		end
 		
@@ -1188,7 +838,7 @@ RenderStep:Connect(function()
 				MainGUI:WaitForChild('Sense'):WaitForChild('Sensitivity').Text = MouseSens
 				UIS.MouseDeltaSensitivity = MouseSens
 			end
-		elseif not IsAiming and not IsSprinting and L_15_ and not isFiringModeChanging then
+		elseif not IsAiming and not IsSprinting and L_15_ then
 			if (Character.Head.Position - Camera.CoordinateFrame.p).magnitude < 2 then
 				AnimBaseW.C1 = AnimBaseW.C1:Lerp(CFrame.new() * L_134_, ClientConfig.UnaimSpeed)
 				
@@ -1233,7 +883,7 @@ RenderStep:Connect(function()
 			Character:WaitForChild('Humanoid').Jump = false
 		end
 		
-		if L_15_ then 
+		if L_15_ then
 			Camera.FieldOfView = Camera.FieldOfView * (1 - ClientConfig.ZoomSpeed) + (L_97_ * ClientConfig.ZoomSpeed)
 			if (Character.Head.Position - Camera.CoordinateFrame.p).magnitude >= 2 then
 				L_90_ = ClientConfig.AimCamRecoil
@@ -1279,19 +929,12 @@ end)
 --// Input Connections
 UIS.InputBegan:Connect(function(Input, GPE)
 	if not GPE and L_15_ then
-		if Input.UserInputType == (Enum.UserInputType.MouseButton2 or Input.KeyCode == Enum.KeyCode.ButtonL2) and not isFiringModeChanging and not isInMenu and not isInputBlocked and ClientConfig.CanAim and not isBoltForward and L_15_ and not IsReloading and not IsSprinting then
+		if Input.UserInputType == Enum.UserInputType.MouseButton2 and not isInMenu and not isInputBlocked and ClientConfig.CanAim and not isBoltForward and L_15_ and not IsReloading and not IsSprinting then
 			if not IsAiming then
 				if not AimMode then
-					if ClientConfig.TacticalModeEnabled then
-						L_154_ = 0.015
-						L_155_ = 7
-						Character:WaitForChild("Humanoid").WalkSpeed = 7
-					else
-						L_155_ = 10
-						L_154_ = 0.008
-						Character:WaitForChild("Humanoid").WalkSpeed = 10
-					end
-					
+					VerticalSwayAmp = 0.015
+					SwaySpeed = 7
+					Character:WaitForChild("Humanoid").WalkSpeed = 7
 				end
 				
 				if (Character.Head.Position - Camera.CoordinateFrame.p).magnitude <= 2 then
@@ -1311,12 +954,12 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			L_134_ = CFrame.Angles(0, 0, -0.1)
 		end;
 		
-		if Input.KeyCode == ClientConfig.AlternateAimKey and not isFiringModeChanging and not isInMenu and not isInputBlocked and ClientConfig.CanAim and not isBoltForward and L_15_ and not IsReloading and not IsSprinting then
+		if Input.KeyCode == ClientConfig.AlternateAimKey and not isInMenu and not isInputBlocked and ClientConfig.CanAim and not isBoltForward and L_15_ and not IsReloading and not IsSprinting then
 			if not IsAiming then
 				if not AimMode then
 					Character.Humanoid.WalkSpeed = 10
-					L_155_ = 10
-					L_154_ = 0.008
+					SwaySpeed = 10
+					VerticalSwayAmp = 0.008
 				end
 				L_97_ = CurrenAimZoom
 				L_133_.target = AimPart.CFrame:toObjectSpace(AnimBase.CFrame).p
@@ -1325,199 +968,20 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			end
 		end;
 		
-		if Input.UserInputType == (Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.ButtonR2) and not isFiringModeChanging and not isInputBlocked and CanShoot and L_15_ and not IsReloading and not IsSprinting and not isBoltForward then
+		if Input.UserInputType == (Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.ButtonR2) and not isInputBlocked and CanShoot and L_15_ and not IsReloading and not IsSprinting and not isBoltForward then
 			Mouse1Holding = true
-			if not Shooting and L_15_ and not hasExplosiveEnabled then
-				if L_103_ > 0 then			
+			if not Shooting and L_15_ then
+				if AmmoInMag > 0 then			
 					Shoot()
 				end
-			elseif not Shooting and L_15_ and hasExplosiveEnabled then
+			elseif not Shooting and L_15_ then
 				if L_105_ > 0 then
 					Shoot()
 				end
 			end
 		end;
 		
-		if Input.KeyCode == (ClientConfig.LaserKey or Input.KeyCode == Enum.KeyCode.DPadRight) and L_15_ and ClientConfig.LaserAttached then
-			Plugins.KeyDown[1].Plugin()
-		end;
-		
-		if Input.KeyCode == (ClientConfig.LightKey or Input.KeyCode == Enum.KeyCode.ButtonR3) and L_15_ and ClientConfig.LightAttached then
-			local L_317_ = Gun:FindFirstChild("FlashLight"):FindFirstChild('Light')
-			L_317_.Enabled = not L_317_.Enabled
-		end;
-		
-		if L_15_ and Input.KeyCode == (ClientConfig.FireSelectKey or Input.KeyCode == Enum.KeyCode.DPadUp) and not isFiringModeChanging and not IsExecutingAction and not isInMenu then
-			IsExecutingAction = true
-			if L_92_ == 1 then
-				if Shooting then
-					Shooting = false
-				end
-				if ClientConfig.AutoEnabled then
-					L_92_ = 2
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.AutoEnabled and ClientConfig.BurstEnabled then
-					L_92_ = 3
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled and ClientConfig.BoltAction then
-					L_92_ = 4
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled and not ClientConfig.BoltAction and ClientConfig.ExplosiveEnabled then
-					L_92_ = 6
-					hasExplosiveEnabled = true
-					previousFireMode = CanShoot
-					CanShoot = L_85_
-				elseif not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled and not ClientConfig.BoltAction and not ClientConfig.ExplosiveEnabled then
-					L_92_ = 1
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				end
-			elseif L_92_ == 2 then
-				if Shooting then
-					Shooting = false
-				end
-				if ClientConfig.BurstEnabled then
-					L_92_ = 3
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BurstEnabled and ClientConfig.BoltAction then
-					L_92_ = 4
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BurstEnabled and not ClientConfig.BoltAction and ClientConfig.ExplosiveEnabled then
-					L_92_ = 6
-					hasExplosiveEnabled = true
-					previousFireMode = CanShoot
-					CanShoot = L_85_
-				elseif not ClientConfig.BurstEnabled and not ClientConfig.BoltAction and not ClientConfig.ExplosiveEnabled and ClientConfig.SemiEnabled then
-					L_92_ = 1
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BurstEnabled and not ClientConfig.BoltAction and not ClientConfig.SemiEnabled then
-					L_92_ = 2
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				end
-			elseif L_92_ == 3 then
-				if Shooting then
-					Shooting = false
-				end
-				if ClientConfig.BoltAction then
-					L_92_ = 4
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BoltAction and ClientConfig.ExplosiveEnabled then
-					L_92_ = 6
-					hasExplosiveEnabled = true
-					previousFireMode = CanShoot
-					CanShoot = L_85_
-				elseif not ClientConfig.BoltAction and not ClientConfig.ExplosiveEnabled and ClientConfig.SemiEnabled then
-					L_92_ = 1
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BoltAction and not ClientConfig.SemiEnabled and ClientConfig.AutoEnabled then
-					L_92_ = 2
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.BoltAction and not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled then
-					L_92_ = 3
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				end
-			elseif L_92_ == 4 then
-				if Shooting then
-					Shooting = false
-				end
-				if ClientConfig.ExplosiveEnabled then
-					L_92_ = 6
-					hasExplosiveEnabled = true
-					previousFireMode = CanShoot
-					CanShoot = L_85_
-				elseif not ClientConfig.ExplosiveEnabled and ClientConfig.SemiEnabled then
-					L_92_ = 1
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and ClientConfig.AutoEnabled then
-					L_92_ = 2
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled and ClientConfig.BurstEnabled then
-					L_92_ = 3
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled then
-					L_92_ = 4
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				end
-			elseif L_92_ == 6 then
-				if Shooting then
-					Shooting = false
-				end
-				L_85_ = CanShoot
-				if ClientConfig.SemiEnabled then
-					L_92_ = 1
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and ClientConfig.AutoEnabled then
-					L_92_ = 2
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled and ClientConfig.BurstEnabled then
-					L_92_ = 3
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled and ClientConfig.BoltAction then
-					L_92_ = 4
-					hasExplosiveEnabled = false
-					CanShoot = previousFireMode
-				elseif not ClientConfig.SemiEnabled and not ClientConfig.AutoEnabled and not ClientConfig.BurstEnabled and not ClientConfig.BoltAction then
-					L_92_ = 6
-					hasExplosiveEnabled = true
-					previousFireMode = CanShoot
-					CanShoot = L_85_
-				end
-			end
-			UpdateAmmo()
-			FireModeAnim()
-			IdleAnim()
-			IsExecutingAction = false
-		end;
-		
-		if Input.KeyCode == (Enum.KeyCode.F or Input.KeyCode == Enum.KeyCode.DPadDown) and not isFiringModeChanging and not isInputBlocked and not isInMenu and not IsSprinting and not IsExecutingAction and not IsAiming and not IsReloading and not Shooting and not isInspecting then			
-			if not isBoltBack and not isBoltForward then
-				isBoltForward = true
-				Shooting = false
-				CanShoot = false
-
-				delay(0.6, function()
-					if L_103_ ~= ClientConfig.Ammo and L_103_ > 0 then
-						CreateShell()
-					end
-				end)	
-				BoltBackAnim()
-				isBoltBack = true
-			elseif isBoltBack and isBoltForward then
-				BoltForwardAnim()
-				Shooting = false
-				CanShoot = true
-				if L_103_ ~= ClientConfig.Ammo and L_103_ > 0 then
-					L_103_ = L_103_ - 1
-				elseif L_103_ >= ClientConfig.Ammo then
-					CanShoot = true
-				end						
-				isBoltBack = false
-				isBoltForward = false
-				IdleAnim()
-				isIdle = false
-			end
-			UpdateAmmo()
-		end;
-		
-		if Input.KeyCode == (Enum.KeyCode.LeftShift or Input.KeyCode == Enum.KeyCode.ButtonL3) and not isInMenu and not isInputBlocked and L_146_ then
+		if Input.KeyCode == (Enum.KeyCode.LeftShift or Input.KeyCode == Enum.KeyCode.ButtonL3) and not isInMenu and not isInputBlocked and IsMoving then
 			IsSprintKeyDown = true
 			if L_15_ and not IsExecutingAction and not IsSprinting and IsSprintKeyDown and not AimMode and not isBoltForward then
 				Shooting = false
@@ -1531,78 +995,52 @@ UIS.InputBegan:Connect(function(Input, GPE)
 					end
 				end)
 				L_97_ = 80
-				if ClientConfig.TacticalModeEnabled then
-					L_154_ = 0.4
-					L_155_ = 16
-				else
-					L_155_ = ClientConfig.SprintSpeed
-					L_154_ = 0.4
-				end
+
+				VerticalSwayAmp = 0.4
+				SwaySpeed = 16
 				Character.Humanoid.WalkSpeed = ClientConfig.SprintSpeed
 			end
 		end;
 		
-		if Input.KeyCode == (Enum.KeyCode.R or Input.KeyCode == Enum.KeyCode.ButtonX) and not isFiringModeChanging and not isInMenu and not isInputBlocked and L_15_ and not IsReloading and not IsAiming and not Shooting and not IsSprinting and not isBoltForward then		
-			if not hasExplosiveEnabled then			
-				if TotalAmmo > 0 and L_103_ < ClientConfig.Ammo then
-					Shooting = false
-					IsReloading = true
-					
-					for L_319_forvar1, L_320_forvar2 in pairs(game.Players:GetChildren()) do
-						if L_320_forvar2 and L_320_forvar2:IsA('Player') and L_320_forvar2 ~= Player and L_320_forvar2.TeamColor == Player.TeamColor then
-							if (L_320_forvar2.Character.HumanoidRootPart.Position - Character.HumanoidRootPart.Position).magnitude  <= 150 then
-								if Head:FindFirstChild('AHH') and not Head.AHH.IsPlaying then
-									ChangeIDEvent:FireServer(Head.AHH, L_100_[math.random(0, 23)])
-								end
-							end
-						end
+		if Input.KeyCode == (Enum.KeyCode.R or Input.KeyCode == Enum.KeyCode.ButtonX) and not isInMenu and not isInputBlocked and L_15_ and not IsReloading and not IsAiming and not Shooting and not IsSprinting and not isBoltForward then
+			if TotalAmmo > 0 and AmmoInMag < ClientConfig.Ammo then
+				Shooting = false
+				IsReloading = true
+				
+				ReloadAnim()
+				if AmmoInMag <= 0 and not ClientConfig.CanSlideLock then
+					BoltBackAnim()
+					BoltForwardAnim()
+				end
+				IdleAnim()
+				CanShoot = true
+				
+				if AmmoInMag <= 0 then
+					--> If total ammo doesn't fill the mag
+					if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
+						AmmoInMag = AmmoInMag + TotalAmmo
+						TotalAmmo = 0
+					else --> If total ammo fills the mag
+						TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
+						AmmoInMag = ClientConfig.Ammo
 					end
-					
-					ReloadAnim()
-					if L_103_ <= 0 then
-						if not ClientConfig.CanSlideLock then
-							BoltBackAnim()
-							BoltForwardAnim()
-						end
+				elseif AmmoInMag > 0 then
+					if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
+						AmmoInMag = AmmoInMag + TotalAmmo + 1
+						TotalAmmo = 0
+					else
+						TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
+						AmmoInMag = ClientConfig.Ammo
 					end
-					IdleAnim()
-					CanShoot = true
-					
-					if L_103_ <= 0 then
-						if (TotalAmmo - (ClientConfig.Ammo - L_103_)) < 0 then
-							L_103_ = L_103_ + TotalAmmo
-							TotalAmmo = 0
-						else
-							TotalAmmo = TotalAmmo - (ClientConfig.Ammo - L_103_)
-							L_103_ = ClientConfig.Ammo
-						end
-					elseif L_103_ > 0 then
-						if (TotalAmmo - (ClientConfig.Ammo - L_103_)) < 0 then
-							L_103_ = L_103_ + TotalAmmo + 1
-							TotalAmmo = 0
-						else
-							TotalAmmo = TotalAmmo - (ClientConfig.Ammo - L_103_)
-							L_103_ = ClientConfig.Ammo + 0
-						end
-					end
-	
-					IsReloading = false
-					if not isIdle then
-						CanShoot = true
-					end
-				end;
-			elseif hasExplosiveEnabled then
-				if L_105_ > 0 then
-					Shooting = false
-					IsReloading = true
-					nadeReload()
-					IdleAnim()
-					IsReloading = false
+				end
+
+				IsReloading = false
+				if not isIdle then
 					CanShoot = true
 				end
 			end;
-			UpdateAmmo()
 		end;
+		UpdateAmmo()
 		
 		if Input.KeyCode == Enum.KeyCode.RightBracket and IsAiming then
 			if (MouseSens < 1) then
@@ -1634,50 +1072,12 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			end;
 		end;
 		
-		if Input.KeyCode == ClientConfig.InspectionKey and not isFiringModeChanging and not isInMenu then
+		if Input.KeyCode == ClientConfig.InspectionKey and not isInMenu then
 			if not isInputBlocked then
 				isInputBlocked = true
 				InspectAnim()
 				IdleAnim()
 				isInputBlocked = false
-			end
-		end;
-		
-		if Input.KeyCode == ClientConfig.AttachmentKey and not isFiringModeChanging and not isInputBlocked then
-			if L_15_ then
-				if not isInMenu then
-					IsSprinting = false
-					IsAiming = false
-					CanShoot = false
-					isInMenu = true
-					
-					AttachAnim()
-				elseif isInMenu then
-					IsSprinting = false
-					IsAiming = false
-					CanShoot = true
-					isInMenu = false
-					
-					IdleAnim()
-				end
-			end
-		end;
-			
-		if Input.KeyCode == Enum.KeyCode.P and not isInputBlocked and not isInMenu and not IsAiming and not IsSprinting and not AimMode and not IsReloading and not Recoiling and not IsSprinting then
-			if not isFiringModeChanging then
-				isFiringModeChanging = true
-				TweenService:Create(AnimBaseW, TweenInfo.new(0.2), {
-					C1 = ClientConfig.SprintPos
-				}):Play()
-				wait(0.2)
-				Stance:FireServer("Patrol", ClientConfig.SprintPos)
-			else
-				isFiringModeChanging = false
-				TweenService:Create(AnimBaseW, TweenInfo.new(0.2), {
-					C1 = CFrame.new()
-				}):Play()
-				wait(0.2)
-				Stance:FireServer("Unpatrol")
 			end
 		end;
 	end
@@ -1689,13 +1089,8 @@ UIS.InputEnded:Connect(function(Input, GPE)
 			if IsAiming then
 				if not AimMode then
 					Character:WaitForChild("Humanoid").WalkSpeed = 16
-					if ClientConfig.TacticalModeEnabled then
-						L_154_ = 0.09
-						L_155_ = 11
-					else
-						L_154_ = .2
-						L_155_ = 17
-					end
+					VerticalSwayAmp = 0.09
+					SwaySpeed = 11
 				end	
 				L_97_ = 70
 				L_133_.target = Vector3.new()
@@ -1716,8 +1111,8 @@ UIS.InputEnded:Connect(function(Input, GPE)
 			if IsAiming then
 				if not AimMode then
 					Character.Humanoid.WalkSpeed = 16
-					L_155_ = 17
-					L_154_ = .25
+					SwaySpeed = 17
+					VerticalSwayAmp = .25
 				end	
 				L_97_ = 70
 				L_133_.target = Vector3.new()
@@ -1749,13 +1144,8 @@ UIS.InputEnded:Connect(function(Input, GPE)
 				L_97_ = 70
 			
 				Character.Humanoid.WalkSpeed = 16
-				if ClientConfig.TacticalModeEnabled then
-					L_154_ = 0.09
-					L_155_ = 11
-				else
-					L_154_ = .2
-					L_155_ = 17
-				end			
+				VerticalSwayAmp = 0.09
+				SwaySpeed = 11
 			end
 		end;
 	end

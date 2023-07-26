@@ -39,12 +39,11 @@ local Settings = {
 	FireMode = 2; -- 1 = Semi, 2 = Auto, 3 = Burst, 4 = Bolt Action, 5 = Shot, 6 = Explosive
 	
 --// Firemode Settings
-	CanSelectFire = true;
-	BurstEnabled = false;
+	-- CanSelectFire = true;
+	-- BurstEnabled = false;
 	SemiEnabled = true;
 	AutoEnabled = true;
-	BoltAction = false;
-	ExplosiveEnabled = false;
+	-- BoltAction = false;
 	
 --// Firemode Shot Customization
 	BurstNum = 3; -- How many bullets per burst
@@ -88,8 +87,6 @@ local Settings = {
 	
 --// Extras
 	WalkAnimEnabled = true; -- Set to false to disable walking animation, true to enable
-	SwayEnabled = true;	 -- Set to false to disable sway, true to enable
-	TacticalModeEnabled = true; -- SET THIS TO TRUE TO TURN ON TACTICAL MODEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
 -- Customization
 	AntiTK = false; -- Set to false to allow TK and damaging of NPC, true for no TK. (To damage NPC, this needs to be false)
@@ -109,11 +106,6 @@ local Settings = {
 	SuppressCalloutChance = 0;
 
 --// KeyBindings
-	FireSelectKey = Enum.KeyCode.V;
-	CycleSightKey = Enum.KeyCode.T;
-	LaserKey = Enum.KeyCode.G;
-	LightKey = Enum.KeyCode.B;
-	InteractKey = Enum.KeyCode.E;
 	AlternateAimKey = Enum.KeyCode.Z;
 	InspectionKey = Enum.KeyCode.H;
 	AttachmentKey = Enum.KeyCode.LeftControl;
