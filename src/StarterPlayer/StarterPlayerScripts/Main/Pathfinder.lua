@@ -45,7 +45,7 @@ local BakedPaths = {};
 local AllNodes = {};
 
 function BuildNodes()
-	local inGamePathNodes = script.nodes
+	local inGamePathNodes = game:GetService('ReplicatedStorage').nodes
 
 	local NodeFolder = inGamePathNodes:GetChildren();
 

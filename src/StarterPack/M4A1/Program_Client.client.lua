@@ -10,48 +10,11 @@ local Character = Player.Character;
 local Mouse = Player:GetMouse();
 local Camera = workspace.CurrentCamera;
 
-local HRP = Character:WaitForChild('HumanoidRootPart');
+local Rand = Random.new();
+
 local Humanoid = Character:WaitForChild('Humanoid');
-
---// Services
-local UIS = game:GetService('UserInputService');
-local RunService = game:GetService('RunService');
-
-local RenderStep = RunService.RenderStepped;
-
---// Declarables
-local L_15_ = false;
-local L_16_ = false;
-
-local GunResources = Gun:WaitForChild('Resource');
-local Effects = GunResources:WaitForChild('FX');
-local Events = GunResources:WaitForChild('Events');
-local Modules = GunResources:WaitForChild('Modules');
-local SettingsModules = GunResources:WaitForChild('SettingsModule');
-
-local ClientConfig = require(SettingsModules:WaitForChild("ClientConfig"));
-local SpringModule = require(Modules:WaitForChild("Spring"));
-
-local AmmoFrame;
-local Ammo;
-local AmmoBG;
-local MagCount;
-local MagCountBG;
-local Title;
-
-local MainGUI;
-
-local AnimBase;
-local AnimBaseW;
-local RightArmW;
-local LeftArmW;
-local NeckClone;
-local L_49_;
-
-local CurrentAimZoom = ClientConfig.AimZoom;
-
-local MouseSens = ClientConfig.MouseSensitivity;
-local MouseDeltaSens = UIS.MouseDeltaSensitivity;
+local RightArm = Character:WaitForChild('Right Arm');
+local LeftArm = Character:WaitForChild('Left Arm');
 
 --// Weapon Parts
 local AimPart = Gun:WaitForChild('AimPart');
@@ -59,6 +22,161 @@ local Grip = Gun:WaitForChild('Grip');
 local FirePart = Gun:WaitForChild('FirePart');
 local Mag = Gun:WaitForChild('Mag');
 local Bolt = Gun:WaitForChild('Bolt');
+
+--// Services
+local UIS = game:GetService('UserInputService');
+local RunService = game:GetService('RunService');
+local ReplicatedStorage = game:GetService('ReplicatedStorage');
+
+local RenderStep = RunService.RenderStepped;
+
+--// Declarables
+local L_15_ = false;
+
+local GunResources = Gun:WaitForChild('Resource');
+local Effects = GunResources:WaitForChild('FX');
+local Modules = GunResources:WaitForChild('Modules');
+local SettingsModules = GunResources:WaitForChild('SettingsModule');
+
+local MaxAmmoEvent: BindableEvent = ReplicatedStorage.Bindables:WaitForChild('MaxAmmo');
+
+local ClientConfig = require(SettingsModules:WaitForChild("ClientConfig"));
+local SpringModule = require(Modules:WaitForChild("Spring"));
+
+-- local MainGUI = HUD:WaitForChild('MainGui'):Clone();
+-- MainGUI.Parent = Player.PlayerGui;
+
+local MainGUI = Player.PlayerGui:WaitForChild('MainGUI');
+
+--// New gui
+local InfoFrame = MainGUI:WaitForChild('InfoFrame');
+local AmmoFrame = InfoFrame:WaitForChild('AmmoFrame');
+local Ammo = AmmoFrame:WaitForChild('Ammo');
+local MagAmmo = AmmoFrame:WaitForChild('MagAmmo');
+local Title = InfoFrame:WaitForChild('Title');
+local HitMarker: ImageLabel = MainGUI:WaitForChild('HitMarker');
+
+--// SETUP
+function Weld(Part0, Part1, Offset)
+	local Motor = Instance.new("Motor6D", Part0);
+	Motor.Part0 = Part0;
+	Motor.Part1 = Part1;
+	Motor.Name = Part0.Name;
+	Motor.C0 = Offset or Part0.CFrame:inverse() * Part1.CFrame;
+	return Motor;
+end
+
+local Arms = Instance.new("Model");
+Arms.Name = Gun.Name.."Arms";
+Arms.Parent = Camera;
+
+local CameraRoot = Instance.new("Part");
+CameraRoot.Name = "CameraRoot";
+CameraRoot.FormFactor = "Custom";
+CameraRoot.Position = Vector3.new(0, 0, 0);
+CameraRoot.Size = Vector3.new(0.2, 0.2, 0.2);
+CameraRoot.Transparency = 1;
+CameraRoot.Anchored = true;
+CameraRoot.CanCollide = false;
+CameraRoot.Parent = Arms;
+Arms.PrimaryPart = CameraRoot;
+
+local AnimBase = Instance.new("Part");
+AnimBase.FormFactor = "Custom";
+AnimBase.CanCollide = false;
+AnimBase.Transparency = 1;
+AnimBase.Anchored = false;
+AnimBase.Name = "AnimBase";
+AnimBase.Parent = Arms;
+
+local AnimBaseW = Instance.new("Motor6D");
+AnimBaseW.Part0 = AnimBase;
+AnimBaseW.Part1 = CameraRoot;
+AnimBaseW.Name = "AnimBaseW";
+AnimBaseW.Parent = AnimBase;
+
+local ViewmodelHumanoid = Instance.new("Humanoid");
+ViewmodelHumanoid.MaxHealth = 0;
+ViewmodelHumanoid.Health = 0;
+ViewmodelHumanoid.Name = "";
+ViewmodelHumanoid.Parent = Arms;
+
+--// Right Arm Setup
+local RightArmClone = RightArm:Clone();
+RightArmClone.Name = "Right Arm";
+RightArmClone.FormFactor = "Custom";
+RightArmClone.Size = Vector3.new(0.8, 2.5, 0.8);
+RightArmClone.Transparency = 0.0;
+RightArmClone.Parent = Arms;
+
+local RightArmW = Instance.new("Motor6D");
+RightArmW.Name = 'RightArmMotor';
+RightArmW.Part0 = AnimBase;
+RightArmW.Part1 = RightArmClone;
+RightArmW.C1 = ClientConfig.RightArmPos;
+RightArmW.Parent = AnimBase;
+
+local LeftArmClone = LeftArm:Clone();
+LeftArmClone.Name = "Left Arm";
+LeftArmClone.FormFactor = "Custom";
+LeftArmClone.Size = Vector3.new(0.8, 2.5, 0.8);
+LeftArmClone.Transparency = 0.0;
+LeftArmClone.Parent = Arms;
+
+local LeftArmW = Instance.new("Motor6D");
+LeftArmW.Name = 'LeftArmMotor';
+LeftArmW.Part0 = AnimBase;
+LeftArmW.Part1 = LeftArmClone;
+LeftArmW.C1 = ClientConfig.LeftArmPos;
+LeftArmW.Parent = AnimBase;
+
+local GripJoint = Instance.new("Motor6D");
+GripJoint.Name = 'GripJoint';
+GripJoint.Part0 = RightArmClone;
+GripJoint.Part1 = Grip;
+GripJoint.C1 = ClientConfig.GunPos;
+GripJoint.Parent = RightArmClone;
+
+for _, GunChild in Gun:GetChildren() do
+	if GunChild:IsA("Part") or GunChild:IsA("MeshPart") or GunChild:IsA("UnionOperation") then
+		GunChild.Anchored = true
+		
+		if GunChild.Name ~= "Grip" and GunChild.Name ~= "Bolt" and GunChild.Name ~= 'Lid' then
+			Weld(GunChild, Gun:WaitForChild("Grip"))
+		end
+		
+		if GunChild.Name == "Bolt" then
+			if Gun:FindFirstChild('BoltHinge') then
+				Weld(GunChild, Gun:WaitForChild("BoltHinge"))
+			else
+				Weld(GunChild, Gun:WaitForChild("Grip"))
+			end
+		end;
+		
+		if GunChild.Name == "Lid" then
+			if Gun:FindFirstChild('LidHinge') then
+				Weld(GunChild, Gun:WaitForChild("LidHinge"))
+			else
+				Weld(GunChild, Gun:WaitForChild("Grip"))
+			end
+		end
+	end
+end
+
+for _, GunChild in Gun:GetChildren() do
+	if GunChild:IsA("Part") or GunChild:IsA("MeshPart") or GunChild:IsA("UnionOperation") then
+		GunChild.Anchored = false
+		GunChild.Parent = Arms;
+	end
+end
+
+-- local NeckClone;
+local BoltMotor;
+
+local CurrentAimZoom = ClientConfig.AimZoom;
+
+local MouseSens = ClientConfig.MouseSensitivity;
+local MouseDeltaSens = UIS.MouseDeltaSensitivity;
 
 --// States
 local IsAiming = false;
@@ -69,8 +187,6 @@ local CanShoot = true;
 local IsSprintKeyDown = false;
 local CanSprint = false;
 local isIdle = false;
-
-local L_86_ = false;
 
 local CurrentGunRecoil;
 local CurrentCamRecoil;
@@ -85,365 +201,108 @@ local DebrisFolder = Instance.new("Folder");
 DebrisFolder.Name = "BulletModel: " .. Player.Name;
 DebrisFolder.Parent = workspace;
 
-local L_102_
-
 local AmmoInMag = ClientConfig.Ammo
 local TotalAmmo = ClientConfig.StoredAmmo * ClientConfig.MagCount
 
-local L_105_ = ClientConfig.ExplosiveAmmo
-
-IgnoreList = {
+local RayParams = RaycastParams.new();
+RayParams.FilterType = Enum.RaycastFilterType.Exclude;
+RayParams.FilterDescendantsInstances = {
 	Character,
 	DebrisFolder,
 	Camera
-}
-
---// Events
-local Equipped = Events:WaitForChild('Equipped')
+};
 
 --// Math
 local LeanOffset = CFrame.Angles(0, 0, 0)
 
---// Functions
-function MakeFakeArms()
-	Arms = Instance.new("Model")
-	Arms.Name = "Arms"
-	Arms.Parent = Camera
-
-	local L_172_ = Instance.new("Humanoid")
-	L_172_.MaxHealth = 0
-	L_172_.Health = 0
-	L_172_.Name = ""
-	L_172_.Parent = Arms
-		
-	if Character:FindFirstChild("Shirt") then
-		local L_177_ = Character:FindFirstChild("Shirt"):clone()
-		L_177_.Parent = Arms
-	end
-	
-	local L_173_ = Character:FindFirstChild("Right Arm"):clone()
-	for _, L_179_forvar2 in pairs(L_173_:GetChildren()) do
-		if L_179_forvar2:IsA('Motor6D') then
-			L_179_forvar2:Destroy()
-		end
-	end
-	L_173_.Name = "Right Arm"
-	L_173_.FormFactor = "Custom"
-	L_173_.Size = Vector3.new(0.8, 2.5, 0.8)
-	L_173_.Transparency = 0.0
-	
-	local L_174_ = Instance.new("Motor6D")
-	L_174_.Part0 = L_173_
-	L_174_.Part1 = Character:FindFirstChild("Right Arm")
-	L_174_.C0 = CFrame.new()
-	L_174_.C1 = CFrame.new()
-	L_174_.Parent = L_173_	
-	L_173_.Parent = Arms
-		
-	local L_175_ = Character:FindFirstChild("Left Arm"):clone()
-	L_175_.Name = "Left Arm"
-	L_175_.FormFactor = "Custom"
-	L_175_.Size = Vector3.new(0.8, 2.5, 0.8)
-	L_175_.Transparency = 0.0	
-	
-	local L_176_ = Instance.new("Motor6D")
-	L_176_.Part0 = L_175_
-	L_176_.Part1 = Character:FindFirstChild("Left Arm")
-	L_176_.C0 = CFrame.new()
-	L_176_.C1 = CFrame.new()
-	L_176_.Parent = L_175_	
-	L_175_.Parent = Arms
+local function UpdateAmmo()
+	MagAmmo.Text = AmmoInMag;
+	Ammo.Text = TotalAmmo;
 end
 
-function RemoveArmModel()
-	if Arms then
-		Arms:Destroy()
-		Arms = nil
-	end
-end
+MaxAmmoEvent.Event:Connect(function()
+	TotalAmmo = ClientConfig.StoredAmmo * ClientConfig.MagCount
+	UpdateAmmo()
+end)
 
-function CreateShell()
-	local shell = Gun.Shell:clone()
-	if shell:FindFirstChild('Shell') then
-		shell.Shell:Destroy()
-	end
-	shell.CFrame =  Gun.Chamber.CFrame
-	shell.Velocity = Gun.Chamber.CFrame.lookVector * 30 + Vector3.new(0, 4, 0)
-	--shell.RotVelocity = Vector3.new(-10,40,30)
-	shell.CanCollide = false
-	shell.Parent = DebrisFolder
-
-	game:GetService("Debris"):AddItem(shell, 1)
-
-	task.delay(0.5, function()
-		if Effects:FindFirstChild('ShellCasing') then
-			local shellCasing = Effects.ShellCasing:clone()
-			shellCasing.Parent = Player.PlayerGui
-			shellCasing:Play();
-
-			game:GetService('Debris'):AddItem(shellCasing, shellCasing.TimeLength)
-		end
-	end)
-end
-
-function UpdateAmmo()
-	Ammo.Text = AmmoInMag
-	AmmoBG.Text = Ammo.Text
+Gun.Equipped:Connect(function()
+	Title.Text = Gun.Name
+	UpdateAmmo()
 	
-	MagCount.Text = '| ' .. math.ceil(TotalAmmo / ClientConfig.StoredAmmo)
-	MagCountBG.Text = MagCount.Text
-end
+	BoltMotor = Bolt.Bolt
+	
+	UIS.MouseIconEnabled = false
+	Camera.FieldOfView = 70
+	L_15_ = true
+end)
 
---// Connections
-Equipped.OnClientEvent:Connect(function(L_191_arg1, _, AnimBaseParam, AnimBaseWParam, RAW, LAW, CloneNeckJoint)
-	if L_191_arg1 and not L_15_ then
-		MakeFakeArms()
-		
-		MainGUI = Player.PlayerGui.MainGui
-		AmmoFrame = MainGUI:WaitForChild('GameGui'):WaitForChild('AmmoFrame')
-		Ammo = AmmoFrame:WaitForChild('Ammo')
-		AmmoBG = AmmoFrame:WaitForChild('AmmoBackground')
-		MagCount = AmmoFrame:WaitForChild('MagCount')
-		MagCountBG = AmmoFrame:WaitForChild('MagCountBackground')
-		Title = AmmoFrame:WaitForChild('Title')
-		
-		Title.Text = Gun.Name
-		UpdateAmmo()
-		
-		AnimBase = AnimBaseParam
-		AnimBaseW = AnimBaseWParam
-		RightArmW = RAW
-		LeftArmW = LAW
-		NeckClone = CloneNeckJoint
-		L_49_ = Bolt.Bolt
-		
-		if ClientConfig.FirstPersonOnly then
-			Player.CameraMode = Enum.CameraMode.LockFirstPerson
-		end
-		--uis.MouseIconEnabled = false
-		Camera.FieldOfView = 70
-		L_15_ = true
-	elseif L_15_ then
-		IsAiming = false
-		IsSprinting = false
-		IsReloading = false
-		Shooting = false
-		
-		CurrentFOV = 70
-		
-		RemoveArmModel()
-		
-		MainGUI:Destroy()	
-		
-		for L_198_forvar1, L_199_forvar2 in pairs(IgnoreList) do
-			if L_199_forvar2 ~= Character and L_199_forvar2 ~= Camera and L_199_forvar2 ~= DebrisFolder then
-				table.remove(IgnoreList, L_198_forvar1)
-			end
-		end
-		
-		if Character:FindFirstChild('Right Arm') and Character:FindFirstChild('Left Arm') then
-			Character['Right Arm'].LocalTransparencyModifier = 0
-			Character['Left Arm'].LocalTransparencyModifier = 0
-		end	
+Gun.Unequipped:Connect(function()
+	L_15_ = false
 
-		CanShoot = true
-		
-		Player.CameraMode = Enum.CameraMode.Classic
-		UIS.MouseIconEnabled = true		
-		Camera.FieldOfView = 70
-		L_15_ = false
-		UIS.MouseDeltaSensitivity = MouseDeltaSens
-	end
+	IsAiming = false
+	IsSprinting = false
+	IsReloading = false
+	Shooting = false
+	
+	CurrentFOV = 70
+	Camera.FieldOfView = 70
+	Arms:PivotTo(CFrame.new())
+
+	CanShoot = true
+	
+	UIS.MouseIconEnabled = true
+	UIS.MouseDeltaSensitivity = MouseDeltaSens
 end)
 
 --// Firemode Functions
-function CreateBullet(L_200_arg1)
-	local L_201_ = FirePart.Position
-	local L_202_ = (Mouse.Hit.p - L_201_).Unit
-	local L_203_ = CFrame.Angles(math.rad(math.random(-L_200_arg1, L_200_arg1)), math.rad(math.random(-L_200_arg1, L_200_arg1)), math.rad(math.random(-L_200_arg1, L_200_arg1)))
-	L_202_ = L_203_ * L_202_	
-	local L_204_ = CFrame.new(L_201_, L_201_ + L_202_)	
-		
-	local L_205_ = Instance.new("Part", DebrisFolder)
-	game.Debris:AddItem(L_205_, 10)
-	L_205_.Shape = Enum.PartType.Ball
-	L_205_.Size = Vector3.new(1, 1, 12)
-	L_205_.Name = "Bullet"
-	L_205_.TopSurface = "Smooth"
-	L_205_.BottomSurface = "Smooth"
-	L_205_.BrickColor = BrickColor.new("Bright green")
-	L_205_.Material = "Neon"
-	L_205_.CanCollide = false
-		--Bullet.CFrame = FirePart.CFrame + (Grip.CFrame.p - Grip.CFrame.p)
-	L_205_.CFrame = L_204_
-		
-	local L_206_ = Instance.new("Sound")
-	L_206_.SoundId = "rbxassetid://341519743"
-	L_206_.Looped = true
-	L_206_:Play()
-	L_206_.Parent = L_205_
-	L_206_.Volume = 0.4
-	L_206_.MaxDistance = 30
+local function FireRaycast(BulletSpread)
+	local RandomAngle = CFrame.Angles(
+		math.rad(Rand:NextNumber(-BulletSpread, BulletSpread)),
+		math.rad(Rand:NextNumber(-BulletSpread, BulletSpread)),
+		math.rad(Rand:NextNumber(-BulletSpread, BulletSpread))
+	);
 	
-	L_205_.Transparency = 1
-	local L_208_ = Instance.new('BodyForce', L_205_)
-		
-	--> Bullet force
-	L_208_.Force = ClientConfig.BulletPhysics
-	L_205_.Velocity = L_202_ * ClientConfig.BulletSpeed
-		
-	local L_209_ = Instance.new('Attachment', L_205_)
-	L_209_.Position = Vector3.new(0.1, 0, 0)
-	local L_210_ = Instance.new('Attachment', L_205_)
-	L_210_.Position = Vector3.new(-0.1, 0, 0)
-		
-	if ClientConfig.TracerEnabled == true then
-		local L_212_ = Instance.new('Trail', L_205_)
-		L_212_.Attachment0 = L_209_
-		L_212_.Attachment1 = L_210_
-		L_212_.Transparency = NumberSequence.new(ClientConfig.TracerTransparency)
-		L_212_.LightEmission = ClientConfig.TracerLightEmission
-		L_212_.TextureLength = ClientConfig.TracerTextureLength
-		L_212_.Lifetime = ClientConfig.TracerLifetime
-		L_212_.FaceCamera = ClientConfig.TracerFaceCamera
-		L_212_.Color = ColorSequence.new(ClientConfig.TracerColor.Color)
-	end
-		
-	if Gun:FindFirstChild('Shell') then
-		CreateShell()	
-	end	
-		
-	task.delay(0.2, function()
-		L_205_.Transparency = 0
-	end)
-	
-	return L_205_
-end
+	local RandomDirection = CFrame.lookAt(
+		Camera.CFrame.Position,
+		Camera.CFrame.Position + (RandomAngle * Camera.CFrame.LookVector)
+	);
 
-function CheckForHumanoid(L_213_arg1)
-	local L_214_ = false
-	local L_215_ = nil
-	if L_213_arg1 then
-		if (L_213_arg1.Parent:FindFirstChild("Humanoid") or L_213_arg1.Parent.Parent:FindFirstChild("Humanoid")) then
-			L_214_ = true
-			if L_213_arg1.Parent:FindFirstChild('Humanoid') then
-				L_215_ = L_213_arg1.Parent.Humanoid
-			elseif L_213_arg1.Parent.Parent:FindFirstChild('Humanoid') then
-				L_215_ = L_213_arg1.Parent.Parent.Humanoid
+	local RayHit = workspace:Raycast(
+		Camera.CFrame.Position,
+		RandomDirection.LookVector * 200,
+		RayParams
+	);
+
+	if (RayHit) then
+		local RayHitInstance = RayHit.Instance;
+		local Humanoid = RayHitInstance.Parent:FindFirstChild('Humanoid');
+
+		if (Humanoid) then
+			if (RayHitInstance.Name == 'Head') then
+				HitMarker.ImageColor3 = Color3.fromRGB(255, 50, 50);
+				HitMarker.Visible = true
+
+				Humanoid:TakeDamage(ClientConfig.BaseDamage * ClientConfig.HeadshotMultiplier);
+			elseif (RayHitInstance.Name == 'HumanoidRootPart' or RayHitInstance.Name == 'Torso') then
+				HitMarker.ImageColor3 = Color3.fromRGB(255, 255, 255);
+				HitMarker.Visible = true
+
+				Humanoid:TakeDamage(ClientConfig.BaseDamage);
+			else
+				HitMarker.ImageColor3 = Color3.fromRGB(255, 255, 255);
+				HitMarker.Visible = true
+
+				Humanoid:TakeDamage(ClientConfig.BaseDamage * ClientConfig.LimbshotMultiplier);
 			end
-		else
-			L_214_ = false
-		end	
-	end
-	return L_214_, L_215_
-end
 
-function CastRay(L_216_arg1)
-	local HitObject, HitPosition, HitNormal
-	local AimPartPos = AimPart.Position;
-	local L_221_ = L_216_arg1.Position;
-	local BulletDistTravelled = 0
-	
-	while true do
-		RenderStep:Wait()
-		L_221_ = L_216_arg1.Position;
-		BulletDistTravelled = BulletDistTravelled + (L_221_ - AimPartPos).Magnitude
-		HitObject, HitPosition, HitNormal = workspace:FindPartOnRayWithIgnoreList(Ray.new(AimPartPos, (L_221_ - AimPartPos)), IgnoreList);
-		
-		local L_224_ = Vector3.new(0, 1, 0):Cross(HitNormal)
-		local L_225_ = math.asin(L_224_.Magnitude) -- division by 1 is redundant
-
-
-		if BulletDistTravelled > ClientConfig.BulletDecay then
-			L_216_arg1:Destroy()
-			break
-		end
-
-		if HitObject and (HitObject and HitObject.Transparency >= 1 or HitObject.CanCollide == false) and HitObject.Name ~= 'Right Arm' and HitObject.Name ~= 'Left Arm' and HitObject.Name ~= 'Right Leg' and HitObject.Name ~= 'Left Leg' and HitObject.Name ~= 'Armor' then
-			table.insert(IgnoreList, HitObject)
-		end
-	
-		if HitObject then
-		
-			local L_226_ = CheckForHumanoid(HitObject)
-			if L_226_ == false then
-				L_216_arg1:Destroy()
-				--> TODO: Make bullet hole and sound
-			elseif L_226_ == true then
-				L_216_arg1:Destroy()
-				--> TODO: Make bullet hole and sound
+			if (Humanoid.Health <= 0) then
+				RayHitInstance:ApplyImpulse(RandomDirection.LookVector * 100)
 			end
 		end
-	
-		if HitObject then
-			local FoundHumanoid, HitHumanoid = CheckForHumanoid(HitObject)
-			if FoundHumanoid then
-				if ClientConfig.AntiTK then
-					if game.Players:FindFirstChild(HitHumanoid.Parent.Name) and game.Players:FindFirstChild(HitHumanoid.Parent.Name).TeamColor ~= Player.TeamColor or HitHumanoid.Parent:FindFirstChild('Vars') and game.Players:FindFirstChild(HitHumanoid.Parent:WaitForChild('Vars'):WaitForChild('BotID').Value) and Player.TeamColor ~= HitHumanoid.Parent:WaitForChild('Vars'):WaitForChild('teamColor').Value then
-						if HitObject.Name == 'Head' then
-							--> TODO: Damage the zombie (head damage)
-							local L_231_ = Effects:WaitForChild('BodyHit'):clone()
-							L_231_.Parent = Player.PlayerGui
-							L_231_:Play()
-							game:GetService("Debris"):addItem(L_231_, L_231_.TimeLength)
-						end
-						if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-							if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-								--> TODO: Damage the zombie (limb damage)
-							elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor'  then
-								--> TODO: Damage the zombie (base damage)
-							elseif HitObject.Name == 'Armor' then
-								--> TODO: Damage the zombie (armor damage)
-							end
-							local L_232_ = Effects:WaitForChild('BodyHit'):clone()
-							L_232_.Parent = Player.PlayerGui
-							L_232_:Play()
-							game:GetService("Debris"):addItem(L_232_, L_232_.TimeLength)
-						end
-						if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-							--> TODO: Damage the zombie (head damage)
-							local L_233_ = Effects:WaitForChild('BodyHit'):clone()
-							L_233_.Parent = Player.PlayerGui
-							L_233_:Play()
-							game:GetService("Debris"):addItem(L_233_, L_233_.TimeLength)
-						end
-					end
-				else
-					if HitObject.Name == 'Head' then
-						--> TODO: Damage the zombie (head damage)
-						local L_234_ = Effects:WaitForChild('BodyHit'):clone()
-						L_234_.Parent = Player.PlayerGui
-						L_234_:Play()
-						game:GetService("Debris"):addItem(L_234_, L_234_.TimeLength)
-					end
-					if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-						if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-							--> TODO: Damage the zombie (limb damage)
-						elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-							--> TODO: Damage the zombie (base damage)
-						elseif HitObject.Name == 'Armor' then
-							--> TODO: Damage the zombie (armor damage)
-						end
-						local L_235_ = Effects:WaitForChild('BodyHit'):clone()
-						L_235_.Parent = Player.PlayerGui
-						L_235_:Play()
-						game:GetService("Debris"):addItem(L_235_, L_235_.TimeLength)
-					end
-					if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-						--> TODO: Damage the zombie (head damage)
-						local L_236_ = Effects:WaitForChild('BodyHit'):clone()
-						L_236_.Parent = Player.PlayerGui
-						L_236_:Play()
-						game:GetService("Debris"):addItem(L_236_, L_236_.TimeLength)
-					end
-				end	
-			end
-		end
-	
-		if HitObject and HitObject.Parent:FindFirstChild("Humanoid") then
-			return HitObject, HitPosition;
-		end
-		AimPartPos = L_221_;
+
+		task.delay(0.05, function()
+			HitMarker.Visible = false
+		end)
 	end
 end
 
@@ -454,14 +313,11 @@ function fireSemi()
 		Shooting = true
 		
 		FirePart:WaitForChild('Fire'):Play()
-		--> TODO: Make barrel flashes
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
 		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		RecoilFront = true
-		task.spawn(function()
-			CastRay(L_102_)
-		end)
+		
+		FireRaycast(ClientConfig.BulletSpread);
 		
 		if ClientConfig.CanBolt == true then
 			BoltingBackAnim()
@@ -493,15 +349,12 @@ function fireAuto()
 		Recoiling = true
 
 		FirePart:WaitForChild('Fire'):Play()
-		--> TODO: Make barrel flashes
 		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		Shooting = true
 		RecoilFront = true
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
-		task.spawn(function()
-			CastRay(L_102_)
-		end)
+
+		FireRaycast(ClientConfig.BulletSpread);
 					
 		for _, L_261_forvar2 in pairs(FirePart:GetChildren()) do
 			if L_261_forvar2.Name:sub(1, 7) == "FlashFX" then
@@ -586,8 +439,7 @@ local BobbleTime = 0
 local BobbleSize = 0.09
 local BobbleSpeed = 11
 
-local AnimBaseC1 = nil
-local AnimBaseC0 = nil
+local AnimBaseC0 = AnimBaseW.C0
 
 local function CalculateSwayCFrame()
 	SwaySpring.t = Vector3.new(SwayX, SwayY, 0);
@@ -660,13 +512,7 @@ local function Reload()
 		IsReloading = true
 		
 		ReloadAnim()
-		if AmmoInMag <= 0 and not ClientConfig.CanSlideLock then
-			BoltBackAnim()
-			BoltForwardAnim()
-		end
-		IdleAnim()
-		CanShoot = true
-		
+
 		if AmmoInMag <= 0 then
 			--> If total ammo doesn't fill the mag
 			if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
@@ -686,6 +532,10 @@ local function Reload()
 			end
 		end
 
+		IdleAnim()
+
+		CanShoot = true
+
 		IsReloading = false
 		if not isIdle then
 			CanShoot = true
@@ -699,12 +549,7 @@ end)
 
 RenderStep:Connect(function(deltaTime)
 	if L_15_ then
-		if AnimBaseC0 == nil or AnimBaseC1 == nil then
-			AnimBaseC0 = AnimBaseW.C0
-			AnimBaseC1 = AnimBaseW.C1
-		end
-		
-		Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * RecoilAddition, 0.2)
+		Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * RecoilAddition, 0.3)
 		Camera.FieldOfView = Camera.FieldOfView * (1 - ClientConfig.ZoomSpeed) + (CurrentFOV * ClientConfig.ZoomSpeed)
 		
 		--> Sway
@@ -727,7 +572,7 @@ RenderStep:Connect(function(deltaTime)
 		elseif not IsSprinting and not CanSprint and not IsAiming and not IsReloading and not Shooting then
 			AnimBaseW.C1 = AnimBaseW.C1:Lerp(
 				CFrame.new() * LeanOffset,
-				0.05
+				0.15
 			);
 		end
 		
@@ -763,9 +608,9 @@ RenderStep:Connect(function(deltaTime)
 		if Recoiling then
 			-->
 			RecoilAddition = CFrame.fromEulerAnglesXYZ(
-				math.rad(CurrentCamRecoil * math.random(0, CurrentCamShake)),
-				math.rad(CurrentCamRecoil * math.random(-CurrentCamShake, CurrentCamShake)),
-				math.rad(CurrentCamRecoil * math.random(-CurrentCamShake, CurrentCamShake))
+				math.rad(CurrentCamRecoil * Rand:NextNumber(0, CurrentCamShake)),
+				math.rad(CurrentCamRecoil * Rand:NextNumber(-CurrentCamShake, CurrentCamShake)),
+				math.rad(CurrentCamRecoil * Rand:NextNumber(-CurrentCamShake, CurrentCamShake))
 			);
 
 			AnimBaseW.C0 = AnimBaseW.C0:Lerp(
@@ -781,12 +626,13 @@ RenderStep:Connect(function(deltaTime)
 			);
 		end
 		
-		NeckClone.C0 = HRP.CFrame:toObjectSpace(
-			HRP.CFrame *
-			CFrame.new(0, 1.5, 0) *
-			CFrame.new(Humanoid.CameraOffset)
-		);
-		NeckClone.C1 = CFrame.Angles(-math.asin(Camera.CFrame.LookVector.Y), 0, 0);
+		CameraRoot.CFrame = Camera.CFrame;
+		-- NeckClone.C0 = HRP.CFrame:toObjectSpace(
+		-- 	HRP.CFrame *
+		-- 	CFrame.new(0, 1.5, 0) *
+		-- 	CFrame.new(Humanoid.CameraOffset)
+		-- );
+		-- NeckClone.C1 = CFrame.Angles(-math.asin(Camera.CFrame.LookVector.Y), 0, 0);
 		UIS.MouseIconEnabled = false;
 	end
 end)
@@ -795,7 +641,6 @@ end)
 UIS.InputBegan:Connect(function(Input, GPE)
 	if not GPE and L_15_ then
 		if (Input.UserInputType == Enum.UserInputType.MouseButton2 and
-			ClientConfig.CanAim and
 			not IsReloading and
 			not IsSprinting)
 		then
@@ -817,7 +662,7 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			LeanOffset = CFrame.Angles(0, 0, -0.1)
 		end;
 		
-		if (Input.UserInputType == Enum.UserInputType.MouseButton1 and
+		if ((Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.E) and
 			CanShoot and
 			not IsReloading and
 			not IsSprinting
@@ -829,9 +674,7 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			end
 		end;
 		
-		if (Input.KeyCode == Enum.KeyCode.LeftShift and
-			IsMoving
-		) then
+		if (Input.KeyCode == Enum.KeyCode.LeftShift and IsMoving) then
 			IsSprintKeyDown = true
 
 			if (not IsSprinting and IsSprintKeyDown) then
@@ -868,7 +711,7 @@ end)
 
 UIS.InputEnded:Connect(function(Input, GPE)
 	if not GPE and L_15_ then
-		if (Input.UserInputType == Enum.UserInputType.MouseButton2 and ClientConfig.CanAim) then
+		if (Input.UserInputType == Enum.UserInputType.MouseButton2) then
 			if IsAiming then --> Return back to normal unaimed position
 				Humanoid.WalkSpeed = 16;
 				BobbleSize = 0.09;
@@ -883,7 +726,7 @@ UIS.InputEnded:Connect(function(Input, GPE)
 			LeanOffset = CFrame.Angles(0, 0, 0)
 		end;
 		
-		if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+		if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.E) then
 			Mouse1Holding = false
 			if Shooting then
 				Shooting = false
@@ -917,30 +760,9 @@ function IdleAnim()
 	});
 end;
 
-function EquipAnim()
-	ClientConfig.EquipAnim(Character, AnimationSpeed, {
-		AnimBaseW
-	});
-end;
-
-function UnequipAnim()
-	ClientConfig.UnequipAnim(Character, AnimationSpeed, {
-		AnimBaseW
-	});
-end;
-
-function FireModeAnim()
-	ClientConfig.FireModeAnim(Character, AnimationSpeed, {
-		AnimBaseW,
-		LeftArmW,
-		RightArmW,
-		Grip
-	});
-end
-
 function ReloadAnim()
 	ClientConfig.ReloadAnim(Character, AnimationSpeed, {
-		[1] = false,
+		[1] = Arms,
 		[2] = RightArmW,
 		[3] = LeftArmW,
 		[4] = Mag,
@@ -951,66 +773,12 @@ end;
 
 function BoltingBackAnim()
 	ClientConfig.BoltingBackAnim(Character, AnimationSpeed, {
-		L_49_
+		BoltMotor
 	});
 end
 
 function BoltingForwardAnim()
 	ClientConfig.BoltingForwardAnim(Character, AnimationSpeed, {
-		L_49_
-	});
-end
-
-function BoltingForwardAnim()
-	ClientConfig.BoltingForwardAnim(Character, AnimationSpeed, {
-		L_49_
-	});
-end
-
-function BoltBackAnim()
-	ClientConfig.BoltBackAnim(Character, AnimationSpeed, {
-		L_49_,
-		LeftArmW,
-		RightArmW,
-		AnimBaseW,
-		Bolt
-	});
-end
-
-function BoltForwardAnim()
-	ClientConfig.BoltForwardAnim(Character, AnimationSpeed, {
-		L_49_,
-		LeftArmW,
-		RightArmW,
-		AnimBaseW,
-		Bolt
-	});
-end
-
-function InspectAnim()
-	ClientConfig.InspectAnim(Character, AnimationSpeed, {
-		LeftArmW,
-		RightArmW
-	});
-end
-
-function nadeReload()
-	ClientConfig.nadeReload(Character, AnimationSpeed, {
-		RightArmW,
-		LeftArmW
-	});
-end
-
-function AttachAnim()
-	ClientConfig.AttachAnim(Character, AnimationSpeed, {
-		RightArmW,
-		LeftArmW
-	});
-end
-
-function PatrolAnim()
-	ClientConfig.PatrolAnim(Character, AnimationSpeed, {
-		RightArmW,
-		LeftArmW
+		BoltMotor
 	});
 end

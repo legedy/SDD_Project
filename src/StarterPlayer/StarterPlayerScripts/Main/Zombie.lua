@@ -31,8 +31,6 @@ function Zombie:Init(TargetBasePart)
 	self.Humanoid.Died:Connect(function()
 		self:DelayDestroy();
 	end);
-
-	print('initialized')
 end
 
 function Zombie:Step()
@@ -53,6 +51,10 @@ function Zombie:Step()
 		self.InView = true;
 	else
 		if (self.InView) then
+			self:UpdatePath();
+		end
+
+		if (self.Path[self.PathIter] == nil) then
 			self:UpdatePath();
 		end
 
@@ -79,6 +81,8 @@ function Zombie:DelayDestroy()
 	self.Step = nil;
 	self.ChangeTargetNode = nil;
 	self.UpdatePath = nil;
+
+	self.Object.Parent = workspace.Debris;
 
 	--> Ragdoll the zombie
 	for _, v in self.Object:GetDescendants() do
@@ -108,6 +112,10 @@ function Zombie:DelayDestroy()
 			v:Destroy()
 		end
 	end
+
+	task.delay(5, function()
+		self.Object:Destroy();
+	end);
 
 end
 

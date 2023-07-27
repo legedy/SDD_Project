@@ -59,18 +59,6 @@ Actor:BindToMessage('UpdatePlayerNode', function(NodeId)
 end)
 
 Actor:BindToMessage('AddZombie', function(Zombie)
-	--[[
-		Zombies start with 150 health on Round 1,
-		and gain 100 health every round until
-		round 9. Upon reaching round 10, their
-		health is given a 1.1 multiplier every round.
-
-		For example, a zombie has 550 health on
-		Round 5, 1045 on Round 10, 2710 on
-		Round 20, 47295 on Round 50 and 5552108
-		on Round 100.
-	]]
-
 	local ZombieObj = ZombieClass.new(Zombie);
 	ZombieObj:Init(TargetBasePart);
 
