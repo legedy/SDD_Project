@@ -68,10 +68,7 @@ local Mouse1Holding = false;
 local CanShoot = true;
 local IsSprintKeyDown = false;
 local CanSprint = false;
-local isBoltForward = false;
 local isIdle = false;
-local isInputBlocked = false;
-local isInMenu = false;
 
 local L_86_ = false;
 
@@ -93,13 +90,15 @@ local L_102_
 local AmmoInMag = ClientConfig.Ammo
 local TotalAmmo = ClientConfig.StoredAmmo * ClientConfig.MagCount
 
-local L_105_ = ClientConfig.ExplosiveAmmo
-
 IgnoreList = {
 	Character,
 	DebrisFolder,
 	Camera
 }
+
+local RayParams = RaycastParams.new();
+RayParams.FilterType = Enum.RaycastFilterType.Exclude;
+RayParams.FilterDescendantsInstances = IgnoreList;
 
 --// Events
 local Equipped = Events:WaitForChild('Equipped')
@@ -197,6 +196,35 @@ function UpdateAmmo()
 	MagCountBG.Text = MagCount.Text
 end
 
+Gun.Equipped:Connect(function()
+	MakeFakeArms()
+		
+	MainGUI = Player.PlayerGui.MainGui
+	AmmoFrame = MainGUI:WaitForChild('GameGui'):WaitForChild('AmmoFrame')
+	Ammo = AmmoFrame:WaitForChild('Ammo')
+	AmmoBG = AmmoFrame:WaitForChild('AmmoBackground')
+	MagCount = AmmoFrame:WaitForChild('MagCount')
+	MagCountBG = AmmoFrame:WaitForChild('MagCountBackground')
+	Title = AmmoFrame:WaitForChild('Title')
+	
+	Title.Text = Gun.Name
+	UpdateAmmo()
+	
+	-- AnimBase = AnimBaseParam
+	-- AnimBaseW = AnimBaseWParam
+	-- RightArmW = RAW
+	-- LeftArmW = LAW
+	-- NeckClone = CloneNeckJoint
+	L_49_ = Bolt.Bolt
+	
+	if ClientConfig.FirstPersonOnly then
+		Player.CameraMode = Enum.CameraMode.LockFirstPerson
+	end
+	--uis.MouseIconEnabled = false
+	Camera.FieldOfView = 70
+	L_15_ = true
+end)
+
 --// Connections
 Equipped.OnClientEvent:Connect(function(L_191_arg1, _, AnimBaseParam, AnimBaseWParam, RAW, LAW, CloneNeckJoint)
 	if L_191_arg1 and not L_15_ then
@@ -249,7 +277,6 @@ Equipped.OnClientEvent:Connect(function(L_191_arg1, _, AnimBaseParam, AnimBaseWP
 			Character['Left Arm'].LocalTransparencyModifier = 0
 		end	
 
-		isInMenu = false
 		CanShoot = true
 		
 		Player.CameraMode = Enum.CameraMode.Classic
@@ -342,112 +369,40 @@ function CheckForHumanoid(L_213_arg1)
 	return L_214_, L_215_
 end
 
-function CastRay(L_216_arg1)
-	local HitObject, HitPosition, HitNormal
-	local AimPartPos = AimPart.Position;
-	local L_221_ = L_216_arg1.Position;
-	local BulletDistTravelled = 0
+local function FireRaycast(BulletSpread)
+	local RandomAngle = CFrame.Angles(
+		math.rad(math.random(-BulletSpread, BulletSpread)),
+		math.rad(math.random(-BulletSpread, BulletSpread)),
+		math.rad(math.random(-BulletSpread, BulletSpread))
+	);
 	
-	while true do
-		RenderStep:Wait()
-		L_221_ = L_216_arg1.Position;
-		BulletDistTravelled = BulletDistTravelled + (L_221_ - AimPartPos).Magnitude
-		HitObject, HitPosition, HitNormal = workspace:FindPartOnRayWithIgnoreList(Ray.new(AimPartPos, (L_221_ - AimPartPos)), IgnoreList);
-		
-		local L_224_ = Vector3.new(0, 1, 0):Cross(HitNormal)
-		local L_225_ = math.asin(L_224_.Magnitude) -- division by 1 is redundant
+	local RandomDirection = CFrame.lookAt(
+		Camera.CFrame.Position,
+		Camera.CFrame.Position + (RandomAngle * Camera.CFrame.LookVector)
+	);
 
+	local RayHit = workspace:Raycast(
+		Camera.CFrame.Position,
+		RandomDirection.LookVector * 200,
+		RayParams
+	);
 
-		if BulletDistTravelled > ClientConfig.BulletDecay then
-			L_216_arg1:Destroy()
-			break
-		end
+	if (RayHit) then
+		local RayHitInstance = RayHit.Instance;
+		local Humanoid = RayHitInstance.Parent:FindFirstChild('Humanoid');
 
-		if HitObject and (HitObject and HitObject.Transparency >= 1 or HitObject.CanCollide == false) and HitObject.Name ~= 'Right Arm' and HitObject.Name ~= 'Left Arm' and HitObject.Name ~= 'Right Leg' and HitObject.Name ~= 'Left Leg' and HitObject.Name ~= 'Armor' then
-			table.insert(IgnoreList, HitObject)
-		end
-	
-		if HitObject then
-		
-			local L_226_ = CheckForHumanoid(HitObject)
-			if L_226_ == false then
-				L_216_arg1:Destroy()
-				--> TODO: Make bullet hole and sound
-			elseif L_226_ == true then
-				L_216_arg1:Destroy()
-				--> TODO: Make bullet hole and sound
+		if (Humanoid) then
+			if (RayHitInstance.Name == 'Head') then
+				--> TODO: head damage
+				Humanoid:TakeDamage(ClientConfig.HeadDamage);
+			elseif (RayHitInstance.Name == 'HumanoidRootPart' or RayHitInstance.Name == 'Torso') then
+				--> TODO: base damage
+				Humanoid:TakeDamage(ClientConfig.BaseDamage);
+			else
+				--> TODO: limb damage
+				Humanoid:TakeDamage(ClientConfig.LimbDamage);
 			end
 		end
-	
-		if HitObject then
-			local FoundHumanoid, HitHumanoid = CheckForHumanoid(HitObject)
-			if FoundHumanoid then
-				if ClientConfig.AntiTK then
-					if game.Players:FindFirstChild(HitHumanoid.Parent.Name) and game.Players:FindFirstChild(HitHumanoid.Parent.Name).TeamColor ~= Player.TeamColor or HitHumanoid.Parent:FindFirstChild('Vars') and game.Players:FindFirstChild(HitHumanoid.Parent:WaitForChild('Vars'):WaitForChild('BotID').Value) and Player.TeamColor ~= HitHumanoid.Parent:WaitForChild('Vars'):WaitForChild('teamColor').Value then
-						if HitObject.Name == 'Head' then
-							--> TODO: Damage the zombie (head damage)
-							local L_231_ = Effects:WaitForChild('BodyHit'):clone()
-							L_231_.Parent = Player.PlayerGui
-							L_231_:Play()
-							game:GetService("Debris"):addItem(L_231_, L_231_.TimeLength)
-						end
-						if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-							if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-								--> TODO: Damage the zombie (limb damage)
-							elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor'  then
-								--> TODO: Damage the zombie (base damage)
-							elseif HitObject.Name == 'Armor' then
-								--> TODO: Damage the zombie (armor damage)
-							end
-							local L_232_ = Effects:WaitForChild('BodyHit'):clone()
-							L_232_.Parent = Player.PlayerGui
-							L_232_:Play()
-							game:GetService("Debris"):addItem(L_232_, L_232_.TimeLength)
-						end
-						if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-							--> TODO: Damage the zombie (head damage)
-							local L_233_ = Effects:WaitForChild('BodyHit'):clone()
-							L_233_.Parent = Player.PlayerGui
-							L_233_:Play()
-							game:GetService("Debris"):addItem(L_233_, L_233_.TimeLength)
-						end
-					end
-				else
-					if HitObject.Name == 'Head' then
-						--> TODO: Damage the zombie (head damage)
-						local L_234_ = Effects:WaitForChild('BodyHit'):clone()
-						L_234_.Parent = Player.PlayerGui
-						L_234_:Play()
-						game:GetService("Debris"):addItem(L_234_, L_234_.TimeLength)
-					end
-					if HitObject.Name ~= 'Head' and not (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-						if HitObject.Name ~= 'Torso' and HitObject.Name ~= 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-							--> TODO: Damage the zombie (limb damage)
-						elseif HitObject.Name == 'Torso' or HitObject.Name == 'HumanoidRootPart' and HitObject.Name ~= 'Armor' then
-							--> TODO: Damage the zombie (base damage)
-						elseif HitObject.Name == 'Armor' then
-							--> TODO: Damage the zombie (armor damage)
-						end
-						local L_235_ = Effects:WaitForChild('BodyHit'):clone()
-						L_235_.Parent = Player.PlayerGui
-						L_235_:Play()
-						game:GetService("Debris"):addItem(L_235_, L_235_.TimeLength)
-					end
-					if (HitObject.Parent:IsA('Accessory') or HitObject.Parent:IsA('Hat')) then
-						--> TODO: Damage the zombie (head damage)
-						local L_236_ = Effects:WaitForChild('BodyHit'):clone()
-						L_236_.Parent = Player.PlayerGui
-						L_236_:Play()
-						game:GetService("Debris"):addItem(L_236_, L_236_.TimeLength)
-					end
-				end	
-			end
-		end
-	
-		if HitObject and HitObject.Parent:FindFirstChild("Humanoid") then
-			return HitObject, HitPosition;
-		end
-		AimPartPos = L_221_;
 	end
 end
 
@@ -458,14 +413,11 @@ function fireSemi()
 		Shooting = true
 		
 		FirePart:WaitForChild('Fire'):Play()
-		--> TODO: Make barrel flashes
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
 		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		RecoilFront = true
-		task.spawn(function()
-			CastRay(L_102_)
-		end)
+
+		FireRaycast(ClientConfig.BulletSpread);
 		
 		if ClientConfig.CanBolt == true then
 			BoltingBackAnim()
@@ -497,15 +449,12 @@ function fireAuto()
 		Recoiling = true
 
 		FirePart:WaitForChild('Fire'):Play()
-		--> TODO: Make barrel flashes
 		AmmoInMag = AmmoInMag - 1
 		UpdateAmmo()
 		Shooting = true
 		RecoilFront = true
-		L_102_ = CreateBullet(ClientConfig.BulletSpread)
-		task.spawn(function()
-			CastRay(L_102_)
-		end)
+
+		FireRaycast(ClientConfig.BulletSpread);
 					
 		for _, L_261_forvar2 in pairs(FirePart:GetChildren()) do
 			if L_261_forvar2.Name:sub(1, 7) == "FlashFX" then
@@ -658,6 +607,47 @@ local function CalculateIdleBobbleCFrame(deltaTime)
 	return IdleBobbingCFrame;
 end
 
+local function Reload()
+	if TotalAmmo > 0 and AmmoInMag < ClientConfig.Ammo then
+		Shooting = false
+		IsReloading = true
+		
+		ReloadAnim()
+
+		if AmmoInMag <= 0 then
+			--> If total ammo doesn't fill the mag
+			if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
+				AmmoInMag = AmmoInMag + TotalAmmo
+				TotalAmmo = 0
+			else --> If total ammo fills the mag
+				TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
+				AmmoInMag = ClientConfig.Ammo
+			end
+		elseif AmmoInMag > 0 then
+			if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
+				AmmoInMag = AmmoInMag + TotalAmmo + 1
+				TotalAmmo = 0
+			else
+				TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
+				AmmoInMag = ClientConfig.Ammo
+			end
+		end
+
+		-- if AmmoInMag <= 0 and not ClientConfig.CanSlideLock then
+		-- 	BoltBackAnim()
+		-- 	BoltForwardAnim()
+		-- end
+		IdleAnim()
+
+		CanShoot = true
+
+		IsReloading = false
+		if not isIdle then
+			CanShoot = true
+		end
+	end;
+end
+
 Character.Humanoid.Running:Connect(function(Speed)
 	IsMoving = (Speed > 1)
 end)
@@ -726,7 +716,7 @@ RenderStep:Connect(function(deltaTime)
 		end
 		
 		if Recoiling then
-			--> 
+			-->
 			RecoilAddition = CFrame.fromEulerAnglesXYZ(
 				math.rad(CurrentCamRecoil * math.random(0, CurrentCamShake)),
 				math.rad(CurrentCamRecoil * math.random(-CurrentCamShake, CurrentCamShake)),
@@ -759,7 +749,11 @@ end)
 --// Input Connections
 UIS.InputBegan:Connect(function(Input, GPE)
 	if not GPE and L_15_ then
-		if Input.UserInputType == Enum.UserInputType.MouseButton2 and not isInMenu and not isInputBlocked and ClientConfig.CanAim and not isBoltForward and not IsReloading and not IsSprinting then
+		if (Input.UserInputType == Enum.UserInputType.MouseButton2 and
+			ClientConfig.CanAim and
+			not IsReloading and
+			not IsSprinting)
+		then
 			if not IsAiming then
 				BobbleSize = 0.015
 				BobbleSpeed = 7
@@ -778,7 +772,11 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			LeanOffset = CFrame.Angles(0, 0, -0.1)
 		end;
 		
-		if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not isInputBlocked and CanShoot and not IsReloading and not IsSprinting and not isBoltForward) then
+		if ((Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.E) and
+			CanShoot and
+			not IsReloading and
+			not IsSprinting
+		) then
 			Mouse1Holding = true;
 
 			if (not Shooting and AmmoInMag > 0) then
@@ -786,10 +784,10 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			end
 		end;
 		
-		if (Input.KeyCode == Enum.KeyCode.LeftShift and not isInMenu and not isInputBlocked and IsMoving) then
+		if (Input.KeyCode == Enum.KeyCode.LeftShift and IsMoving) then
 			IsSprintKeyDown = true
 
-			if (not IsSprinting and IsSprintKeyDown and not isBoltForward) then
+			if (not IsSprinting and IsSprintKeyDown) then
 				Shooting = false
 				IsAiming = false
 				IsSprinting = true
@@ -808,43 +806,13 @@ UIS.InputBegan:Connect(function(Input, GPE)
 			end
 		end;
 		
-		if (Input.KeyCode == Enum.KeyCode.R and not isInMenu and not isInputBlocked and not IsReloading and not IsAiming and not Shooting and not IsSprinting and not isBoltForward) then
-			if TotalAmmo > 0 and AmmoInMag < ClientConfig.Ammo then
-				Shooting = false
-				IsReloading = true
-				
-				ReloadAnim()
-				if AmmoInMag <= 0 and not ClientConfig.CanSlideLock then
-					BoltBackAnim()
-					BoltForwardAnim()
-				end
-				IdleAnim()
-				CanShoot = true
-				
-				if AmmoInMag <= 0 then
-					--> If total ammo doesn't fill the mag
-					if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
-						AmmoInMag = AmmoInMag + TotalAmmo
-						TotalAmmo = 0
-					else --> If total ammo fills the mag
-						TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
-						AmmoInMag = ClientConfig.Ammo
-					end
-				elseif AmmoInMag > 0 then
-					if (TotalAmmo - (ClientConfig.Ammo - AmmoInMag)) < 0 then
-						AmmoInMag = AmmoInMag + TotalAmmo + 1
-						TotalAmmo = 0
-					else
-						TotalAmmo = TotalAmmo - (ClientConfig.Ammo - AmmoInMag)
-						AmmoInMag = ClientConfig.Ammo
-					end
-				end
-
-				IsReloading = false
-				if not isIdle then
-					CanShoot = true
-				end
-			end;
+		if (Input.KeyCode == Enum.KeyCode.R and
+			not IsReloading and
+			not IsAiming and
+			not Shooting and
+			not IsSprinting
+		) then
+			Reload();
 		end;
 
 		UpdateAmmo()
@@ -853,7 +821,7 @@ end)
 
 UIS.InputEnded:Connect(function(Input, GPE)
 	if not GPE and L_15_ then
-		if (Input.UserInputType == Enum.UserInputType.MouseButton2 and not isInputBlocked and ClientConfig.CanAim and not isInMenu) then
+		if (Input.UserInputType == Enum.UserInputType.MouseButton2 and ClientConfig.CanAim) then
 			if IsAiming then --> Return back to normal unaimed position
 				Humanoid.WalkSpeed = 16;
 				BobbleSize = 0.09;
@@ -868,14 +836,14 @@ UIS.InputEnded:Connect(function(Input, GPE)
 			LeanOffset = CFrame.Angles(0, 0, 0)
 		end;
 		
-		if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not isInputBlocked) then
+		if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.KeyCode == Enum.KeyCode.E) then
 			Mouse1Holding = false
 			if Shooting then
 				Shooting = false
 			end
 		end;
 		
-		if (Input.KeyCode == Enum.KeyCode.LeftShift and not isInputBlocked) then -- SPRINT
+		if (Input.KeyCode == Enum.KeyCode.LeftShift) then -- SPRINT
 			IsSprintKeyDown = false
 			if IsSprinting and not IsAiming and not Shooting and not IsSprintKeyDown then
 				IsSprinting = false
@@ -936,12 +904,6 @@ end;
 
 function BoltingBackAnim()
 	ClientConfig.BoltingBackAnim(Character, AnimationSpeed, {
-		L_49_
-	});
-end
-
-function BoltingForwardAnim()
-	ClientConfig.BoltingForwardAnim(Character, AnimationSpeed, {
 		L_49_
 	});
 end

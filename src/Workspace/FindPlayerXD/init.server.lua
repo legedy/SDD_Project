@@ -53,6 +53,7 @@ for i, Model in ZombiesFolderArray do
 	--> Split the zombies into chunks
 	local ChunkData = ZombieChunks[math.ceil(i/ZombieChunkSize)];
 
+	Model.Humanoid.BreakJointsOnDeath = false;
 	ChunkData.Actor:SendMessage('AddZombie', Model);
 
 	table.insert(
@@ -70,6 +71,8 @@ end
 -- 		end)
 -- 	end
 -- end)
+
+
 
 while true do
 	local nodeId = Pathfinder:FindNearestNode(CurrentPlrChar.HumanoidRootPart.Position);
